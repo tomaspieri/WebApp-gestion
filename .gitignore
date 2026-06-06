@@ -1,0 +1,24 @@
+node_modules/
+.env
+.env.local
+
+# SQLite (NUNCA subir)
+ventas.db
+ventas.db-shm
+ventas.db-wal
+
+# Archivos de configuración local (reemplazados por Supabase)
+gestion-config.json
+
+# Uploads locales (ahora se usa Supabase Storage)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel/
+
+
+.vercel
