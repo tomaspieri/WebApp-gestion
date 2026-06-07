@@ -126,7 +126,7 @@ async function requireAuth(req) {
   if (error || !user) return null;
 
   const { data: perfil } = await adminSupabase
-    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada, alertas_email, email_alternativo, telegram_config, meta_mensual').eq('id', user.id).single();
+    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada, alertas_email, email_alternativo, telegram_config, meta_mensual, telefono_usuario').eq('id', user.id).single();
 
   if (!perfil || !perfil.activo) return null;
   return {
@@ -136,7 +136,8 @@ async function requireAuth(req) {
     alertasEmail: perfil.alertas_email !== false,
     emailAlternativo: perfil.email_alternativo || '',
     telegramConfig: perfil.telegram_config || null,
-    metaMensual: perfil.meta_mensual || null
+    metaMensual: perfil.meta_mensual || null,
+    telefonoUsuario: perfil.telefono_usuario || ''
   };
 }
 
@@ -315,7 +316,8 @@ module.exports = async function handler(req, res) {
   if (method === 'GET'  && p === 'auth/me') return json(res, 200, {
     user: {
       id: user.userId, email: user.email, rol: user.role,
-      nombre: user.nombre, tipoCuenta: user.tipoCuenta, tiendaConfigurada: user.tiendaConfigurada
+      nombre: user.nombre, tipoCuenta: user.tipoCuenta, tiendaConfigurada: user.tiendaConfigurada,
+      metaMensual: user.metaMensual, telefonoUsuario: user.telefonoUsuario
     }
   });
   if (method === 'POST' && p === 'auth/logout')  return json(res, 200, { ok: true });
@@ -770,10 +772,10 @@ async function handleGetConfig(req, res, user) {
   if (tgCfg?.token) { try { telegramToken = decrypt(tgCfg.token); } catch {} }
 
   return json(res, 200, {
-    tiendaUrl:           mp?.tienda_url          || '',
-    tiendaNombre:        mp?.tienda_nombre        || '',
-    vercelDeployHook:    mp?.vercel_deploy_hook   || '',
-    mpConectado:         mp?.conectado            || false,
+    tiendaUrl:                mp?.tienda_url        || '',
+    tiendaNombre:             mp?.tienda_nombre     || '',
+    vercelDeployHookConfigurado: !!(mp?.vercel_deploy_hook),
+    mpConectado:              mp?.conectado         || false,
     mpUserId:            mp?.mp_user_id           || null,
     mpLastSync:          mp?.mp_last_sync         || null,
     alertasEmail:        user.alertasEmail,
@@ -793,6 +795,7 @@ async function handleGetPerfil(req, res, user) {
     tipoCuenta:        user.tipoCuenta,
     tiendaConfigurada: user.tiendaConfigurada,
     metaMensual:       user.metaMensual,
+    telefonoUsuario:   user.telefonoUsuario,
   });
 }
 
@@ -820,6 +823,7 @@ async function handlePutPerfil(req, res, user) {
   if (body.alertasEmail      !== undefined) updates.alertas_email     = body.alertasEmail;
   if (body.emailAlternativo  !== undefined) updates.email_alternativo = body.emailAlternativo;
   if (body.metaMensual       !== undefined) updates.meta_mensual      = body.metaMensual ? parseFloat(body.metaMensual) : null;
+  if (body.telefonoUsuario   !== undefined) updates.telefono_usuario  = body.telefonoUsuario || '';
   const { error } = await adminSupabase.from('perfiles').update(updates).eq('id', user.userId);
   if (error) return json(res, 500, { error: error.message });
   return json(res, 200, { ok: true });

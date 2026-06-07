@@ -1369,6 +1369,18 @@ function rerenderPage() {
 function fmtDate(s)  { if(!s)return'—'; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
 function initials(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 
+// Construye link wa.me con teléfono argentino normalizado (549XXXXXXXXXX)
+function buildWaLink(tel, msg) {
+  if (!tel) return null;
+  let n = tel.replace(/\D/g, '');
+  if (n.startsWith('0')) n = n.slice(1);
+  if (n.startsWith('15')) n = n.slice(2);
+  if (!n.startsWith('54')) n = '54' + n;
+  if (n.startsWith('54') && !n.startsWith('549')) n = '549' + n.slice(2);
+  if (n.length < 11) return null;
+  return `https://wa.me/${n}${msg ? '?text=' + encodeURIComponent(msg) : ''}`;
+}
+
 const COLORS=['#7B6B5E','#5C7A6E','#6E6A8C','#7A5C6E','#5C6E7A','#7A6E5C','#6E7A5C','#5C7A7A'];
 function avatarColor(n){let h=0;for(const c of n)h+=c.charCodeAt(0);return COLORS[h%COLORS.length];}
 
@@ -1670,7 +1682,10 @@ function filterDeudas(){
             <div style="font-size:16px;font-weight:600;color:var(--danger)">${fmt(saldo)}</div>
             <div style="font-size:11px;color:var(--text-2)">saldo</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="openModalPago('${c.id}','${c.nombre.replace(/'/g,"\\'")}',${saldo})">Registrar pago</button>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${(()=>{const waMsg=`Hola ${c.nombre}! Te recuerdo que tenés un saldo pendiente de ${fmt(saldo)} 🙏 Cualquier consulta avisame.`;const waLink=buildWaLink(c.telefono,waMsg);return waLink?`<a href="${waLink}" target="_blank" title="WhatsApp" class="btn btn-secondary btn-sm" style="padding:4px 8px;color:var(--text-2)" onmouseover="this.style.color='#25D366'" onmouseout="this.style.color='var(--text-2)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>`:`<button class="btn btn-secondary btn-sm" style="padding:4px 8px;opacity:.3;cursor:not-allowed" title="Agregá un teléfono al cliente para poder contactarlo por WhatsApp" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text-3)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>`;})()}
+            <button class="btn btn-primary btn-sm" onclick="openModalPago('${c.id}','${c.nombre.replace(/'/g,"\\'")}',${saldo})">Registrar pago</button>
+          </div>
         </div>
       </div>`;
     }).join('')+`</div>`;
@@ -2067,7 +2082,11 @@ async function renderConfig(){
     </div>
     <div class="form-group">
       <label class="form-label">Vercel Deploy Hook <span style="color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0">(para publicar stock)</span></label>
-      <input type="url" class="form-input" id="cfg-deploy-hook" value="${cfg.vercelDeployHook||''}" placeholder="https://api.vercel.com/v1/integrations/deploy/...">
+      ${cfg.vercelDeployHookConfigurado
+        ? `<div style="font-size:13px;color:#5CB870;margin-bottom:8px">✓ Hook configurado</div>
+           <input type="password" class="form-input" id="cfg-deploy-hook" placeholder="Pegá el nuevo hook para reemplazarlo" autocomplete="off">`
+        : `<input type="url" class="form-input" id="cfg-deploy-hook" placeholder="https://api.vercel.com/v1/integrations/deploy/...">`
+      }
       <div style="font-size:11px;color:var(--text-3);margin-top:4px">Vercel Dashboard → proyecto → Settings → Git → Deploy Hooks → crear hook "stock"</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
@@ -2197,6 +2216,11 @@ async function renderConfig(){
       <input type="email" class="form-input" value="${_currentUser?.email||''}" disabled style="opacity:.45;cursor:not-allowed">
     </div>
     <div class="form-group">
+      <label class="form-label">Tu número de WhatsApp</label>
+      <input type="tel" class="form-input" id="cfg-telefono" value="${(_currentUser?.telefonoUsuario||'').replace(/"/g,'&quot;')}" placeholder="Ej: 1123456789" inputmode="numeric">
+      <div style="font-size:11px;color:var(--text-3);margin-top:4px">Número desde el cual contactás a tus clientas. Solo dígitos, sin 0 ni 15.</div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Meta de ventas mensual (opcional)</label>
       <input type="number" class="form-input" id="cfg-meta-mensual" min="0" step="100" placeholder="Ej: 500000" value="${_currentUser?.metaMensual||''}" inputmode="numeric">
       <div style="font-size:11px;color:var(--text-3);margin-top:4px">Muestra una barra de progreso en el Dashboard</div>
@@ -2299,11 +2323,14 @@ async function saveTiendaConfig() {
   btn.textContent = 'Guardando...';
   btn.disabled = true;
   try {
-    await api('PUT', '/api/perfil/tienda', {
-      tiendaNombre:     document.getElementById('cfg-tienda-nombre')?.value?.trim() || '',
-      tiendaUrl:        document.getElementById('cfg-tienda-url')?.value?.trim()    || '',
-      vercelDeployHook: document.getElementById('cfg-deploy-hook')?.value?.trim()  || '',
-    });
+    const hookVal = document.getElementById('cfg-deploy-hook')?.value?.trim() || '';
+    const body = {
+      tiendaNombre: document.getElementById('cfg-tienda-nombre')?.value?.trim() || '',
+      tiendaUrl:    document.getElementById('cfg-tienda-url')?.value?.trim()    || '',
+    };
+    // Solo enviamos el hook si se ingresó uno nuevo (evitamos pisar el valor existente con vacío)
+    if (hookVal) body.vercelDeployHook = hookVal;
+    await api('PUT', '/api/perfil/tienda', body);
     if (_currentUser) _currentUser.tiendaConfigurada = true;
     const b = document.getElementById('store-banner');
     if (b) b.style.display = 'none';
@@ -2326,8 +2353,9 @@ async function savePerfil() {
     const nombre = document.getElementById('cfg-nombre')?.value?.trim() || '';
     const metaRaw = document.getElementById('cfg-meta-mensual')?.value;
     const metaMensual = metaRaw ? parseFloat(metaRaw) || null : null;
-    await api('PUT','/api/perfil', { nombre, metaMensual });
-    if (_currentUser) { _currentUser.nombre = nombre; _currentUser.metaMensual = metaMensual; }
+    const telefonoUsuario = document.getElementById('cfg-telefono')?.value?.trim() || '';
+    await api('PUT','/api/perfil', { nombre, metaMensual, telefonoUsuario });
+    if (_currentUser) { _currentUser.nombre = nombre; _currentUser.metaMensual = metaMensual; _currentUser.telefonoUsuario = telefonoUsuario; }
     renderUserBadge();
     resEl.innerHTML = '<span style="color:#5CB870">Guardado ✓</span>';
     setTimeout(() => { if (resEl) resEl.innerHTML = ''; }, 2000);
