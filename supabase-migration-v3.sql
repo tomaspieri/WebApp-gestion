@@ -64,7 +64,7 @@ FROM clientes c
 LEFT JOIN (
   SELECT
     cliente_id, user_id,
-    SUM(precio_venta * COALESCE(cantidad, 1)) AS total_comprado,
+    SUM(precio_venta) AS total_comprado,
     COUNT(*)                                  AS cant_compras,
     MAX(COALESCE(fecha_compra, created_at::date)) AS ultima_compra
   FROM ventas

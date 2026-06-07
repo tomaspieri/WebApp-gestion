@@ -43,13 +43,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 /* ── SIDEBAR OVERLAY ── */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
 .sidebar-overlay.open{display:block}
-.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:18px;cursor:pointer}
+.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:18px;cursor:pointer;min-width:44px;min-height:44px;line-height:1;transition:background .15s}
 /* ── MOBILE NAV ── */
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200}
-.mob-nav-inner{display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
-.mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-3);font-size:9px;font-weight:500;cursor:pointer;padding:7px 2px 6px;border:none;background:none;font-family:inherit;transition:color .15s;min-width:0}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;height:60px}
+.mob-nav-inner{display:flex;padding-bottom:env(safe-area-inset-bottom,0px);height:100%}
+.mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text-3);font-size:9px;font-weight:500;cursor:pointer;padding:6px 2px;border:none;background:none;font-family:inherit;transition:color .15s;min-width:44px;min-height:44px;line-height:1}
 .mob-nav-item.active{color:var(--accent)}
-.mob-nav-icon{font-size:18px;line-height:1.2}
+.mob-nav-icon{display:flex;align-items:center;justify-content:center;line-height:1}
 /* ── LAYOUT ── */
 .page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .page-title{font-size:18px;font-weight:500;color:var(--text)}
@@ -260,25 +260,62 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
   .table-responsive tbody td[data-label]::before{content:attr(data-label);font-weight:500;font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0}
   .table-responsive tfoot{display:none}
 }
+
+/* ── TABLET (640-1024px) ── */
+@media(max-width:1024px) and (min-width:641px){
+  .sidebar{width:180px}
+  .sidebar .nav-item{font-size:12px}
+  .main{margin-left:180px}
+}
+
+/* ── MOBILE (<= 700px) ── */
 @media(max-width:700px){
-  .sidebar{display:none!important}
-  .menu-btn{display:none!important}
+  /* Sidebar: oculto por defecto, desliza desde la izquierda */
+  .sidebar{display:flex!important;transform:translateX(-100%);transition:transform .25s ease;box-shadow:none;width:260px}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.3)}
+  /* Botón hamburger — visible en mobile */
+  .menu-btn{display:flex!important;align-items:center;justify-content:center}
+  /* Main sin margen, con padding para menu-btn y bottom nav */
   .main{margin-left:0}
-  .main-content{padding:14px 12px 74px}
+  .main-content{padding:56px 12px 74px}
+  /* Bottom nav */
   .mob-nav{display:block}
+  /* Tipografía reducida */
   .page-title{font-size:16px}
   .stat-value{font-size:20px}
+  /* Stat cards: 2 columnas */
   .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  /* Forms */
   .form-row-3{grid-template-columns:1fr 1fr}
-  .modal{padding:16px;border-radius:8px}
+  .form-input,.btn{min-height:44px}
+  /* Modales: bottom sheet */
   .modal-overlay.open{align-items:flex-end}
-  .modal{border-bottom-left-radius:0;border-bottom-right-radius:0;max-width:100vw;width:100%}
+  .modal{
+    border-bottom-left-radius:0;border-bottom-right-radius:0;
+    border-top-left-radius:12px;border-top-right-radius:12px;
+    max-width:100vw;width:100%;
+    padding:20px 16px 16px;
+  }
+  /* Drag handle en modales */
+  .modal::before{
+    content:'';display:block;width:32px;height:4px;
+    background:var(--border);border-radius:2px;
+    margin:0 auto 14px;
+  }
   .btn{padding:8px 12px;font-size:12px}
   table{font-size:12px}
   th,td{padding:8px 10px}
   .card{padding:14px 16px}
   #store-banner,#impersonate-bar{flex-wrap:wrap}
+  /* Alertas: apilar en mobile */
+  .alert-item{flex-direction:column;gap:2px}
+  .alert-item span:last-child{font-size:11px}
+  /* Page header: apilar botones */
+  .page-header{flex-direction:column;align-items:flex-start;gap:8px}
+  /* Cuenta corriente en mobile: más compacta */
+  .cc-entry-actions{opacity:1}
 }
+
 @media(max-width:400px){
   .form-row,.form-row-3{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:1fr 1fr}
@@ -495,11 +532,11 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         </div>
         <div class="form-group">
           <label class="form-label">Precio unitario ($)</label>
-          <input type="number" class="form-input" id="venta-precio-unit" placeholder="0.00" min="0" step="0.01" required oninput="calcTotales()">
+          <input type="number" class="form-input" id="venta-precio-unit" placeholder="0.00" min="0" step="0.01" required oninput="calcTotales()" inputmode="numeric">
         </div>
         <div class="form-group">
           <label class="form-label">Costo unitario ($)</label>
-          <input type="number" class="form-input" id="venta-costo-unit" placeholder="0.00" min="0" step="0.01" required oninput="calcTotales()">
+          <input type="number" class="form-input" id="venta-costo-unit" placeholder="0.00" min="0" step="0.01" required oninput="calcTotales()" inputmode="numeric">
         </div>
       </div>
       <div class="form-row">
@@ -515,7 +552,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Pagado ($)</label>
-          <input type="number" class="form-input" id="venta-pagado" placeholder="0.00" min="0" step="0.01" value="0" oninput="calcTotales()">
+          <input type="number" class="form-input" id="venta-pagado" placeholder="0.00" min="0" step="0.01" value="0" oninput="calcTotales()" inputmode="numeric">
         </div>
         <div class="form-group">
           <label class="form-label">Adeuda ($)</label>
@@ -586,7 +623,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         </div>
         <div class="form-group">
           <label class="form-label">Precio unitario ($)</label>
-          <input type="number" class="form-input" id="gasto-precio-unit" placeholder="0.00" min="0" step="0.01" required oninput="calcTotalGasto()">
+          <input type="number" class="form-input" id="gasto-precio-unit" placeholder="0.00" min="0" step="0.01" required oninput="calcTotalGasto()" inputmode="numeric">
         </div>
         <div class="form-group">
           <label class="form-label">Total gasto</label>
@@ -783,7 +820,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       <div class="form-group">
         <label class="form-label">¿Cuánto pagó? *</label>
         <input type="number" class="form-input" id="pago-monto" min="1" step="0.01" placeholder="$0" required
-          style="font-size:20px;font-weight:600;text-align:center" oninput="validatePagoMonto()">
+          style="font-size:20px;font-weight:600;text-align:center" oninput="validatePagoMonto()" inputmode="numeric">
         <div id="pago-monto-error" style="font-size:12px;color:var(--danger);margin-top:4px;display:none"></div>
       </div>
       <div class="form-row">
@@ -834,13 +871,13 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
             </div>
             <div class="form-group" style="margin-bottom:8px">
               <label class="form-label">Precio venta</label>
-              <input type="number" class="form-input vr-precio" placeholder="0" min="0" step="0.01" required>
+              <input type="number" class="form-input vr-precio" placeholder="0" min="0" step="0.01" required inputmode="numeric">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Costo (opcional)</label>
-              <input type="number" class="form-input vr-costo" placeholder="0" min="0" step="0.01">
+              <input type="number" class="form-input vr-costo" placeholder="0" min="0" step="0.01" inputmode="numeric">
             </div>
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Cantidad</label>
@@ -858,7 +895,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         <div class="form-row">
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">Monto pagado</label>
-            <input type="number" class="form-input" id="vr-pago-monto" placeholder="0" min="0" step="0.01">
+            <input type="number" class="form-input" id="vr-pago-monto" placeholder="0" min="0" step="0.01" inputmode="numeric">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">Medio de pago</label>
@@ -1391,12 +1428,17 @@ async function showPage(page,extra){
 }
 function setMain(html){ const el = document.getElementById('app-main'); if(el) el.innerHTML=html; }
 function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open');
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+  // En mobile bloquear scroll del body cuando sidebar está abierto
+  document.body.style.overflow = sb.classList.contains('open') ? 'hidden' : '';
 }
 function closeSidebar(){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -2156,7 +2198,7 @@ async function renderConfig(){
     </div>
     <div class="form-group">
       <label class="form-label">Meta de ventas mensual (opcional)</label>
-      <input type="number" class="form-input" id="cfg-meta-mensual" min="0" step="100" placeholder="Ej: 500000" value="${_currentUser?.metaMensual||''}">
+      <input type="number" class="form-input" id="cfg-meta-mensual" min="0" step="100" placeholder="Ej: 500000" value="${_currentUser?.metaMensual||''}" inputmode="numeric">
       <div style="font-size:11px;color:var(--text-3);margin-top:4px">Muestra una barra de progreso en el Dashboard</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:4px">

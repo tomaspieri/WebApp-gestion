@@ -781,7 +781,8 @@ async function handleGetConfig(req, res, user) {
     telegramConfigurado: !!(tgCfg?.token && tgCfg?.chat_id),
     telegramActivo:      tgCfg?.activo === true,
     telegramToken,
-    telegramChatId:      tgCfg?.chat_id          || ''
+    // Si no hay chat_id propio, pre-cargar desde env var como sugerencia
+    telegramChatId:      tgCfg?.chat_id || process.env.TELEGRAM_CHAT_ID || ''
   });
 }
 
@@ -1504,39 +1505,122 @@ async function handleMigrationV3(req, res) {
 
 // ── Exportar función de chequeo de cuotas (usada por cron) ───────────────────
 module.exports.checkCuotasVencimiento = async function () {
+  const hoy        = new Date().toISOString().split('T')[0];
+  const dias        = 3;
+  const limiteStr   = new Date(Date.now() + dias * 86400000).toISOString().split('T')[0];
+
+  // Obtener todas las ventas con cuota vencida o próxima, no notificadas hoy
   const { data: ventas } = await adminSupabase
     .from('ventas')
-    .select('id, prenda, adeuda, prox_cuota, notificado_at, user_id, clientes(nombre, telefono)')
+    .select('id, prenda, adeuda, prox_cuota, notificado_at, user_id, clientes(id, nombre, telefono)')
     .gt('adeuda', 0)
-    .not('prox_cuota', 'is', null);
+    .not('prox_cuota', 'is', null)
+    .lte('prox_cuota', limiteStr)
+    .neq('notificado_at', hoy);
 
   if (!ventas?.length) return { notificados: 0 };
 
-  const hoy = new Date().toISOString().split('T')[0];
-  const enTresDias = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
-
-  const vencer = ventas.filter(v => v.prox_cuota <= enTresDias && v.notificado_at !== hoy);
-  if (!vencer.length) return { notificados: 0 };
-
-  const lines = vencer.map(v => {
-    const nombre = v.clientes?.nombre || 'Sin nombre';
-    const tel    = v.clientes?.telefono || '';
-    return `• ${nombre}${tel ? ` (${tel})` : ''} — ${v.prenda} — $${v.adeuda} — vence ${v.prox_cuota}`;
-  }).join('\n');
-
-  await sendEmail(
-    `⚠️ Cuotas por vencer — ${hoy}`,
-    `<p>Las siguientes cuotas vencen en los próximos 3 días:</p><pre>${lines}</pre>`
-  );
-  await sendTelegram(`⚠️ <b>Cuotas por vencer</b>\n\n${lines}`);
-
-  // Marcar notificadas
-  for (const v of vencer) {
-    await adminSupabase.from('ventas').update({ notificado_at: hoy }).eq('id', v.id);
+  // Agrupar por user_id
+  const porUsuario = {};
+  for (const v of ventas) {
+    if (!porUsuario[v.user_id]) porUsuario[v.user_id] = [];
+    porUsuario[v.user_id].push(v);
   }
 
-  return { notificados: vencer.length };
+  let totalNotificados = 0;
+
+  for (const [userId, ventasUser] of Object.entries(porUsuario)) {
+    // Agrupar por cliente
+    const porCliente = {};
+    for (const v of ventasUser) {
+      const cid = v.clientes?.id || v.user_id;
+      if (!porCliente[cid]) {
+        porCliente[cid] = {
+          nombre:      v.clientes?.nombre || 'Sin nombre',
+          totalAdeuda: 0,
+          proxCuota:   v.prox_cuota,
+          ids:         [],
+        };
+      }
+      porCliente[cid].totalAdeuda += parseFloat(v.adeuda) || 0;
+      if (v.prox_cuota < porCliente[cid].proxCuota) porCliente[cid].proxCuota = v.prox_cuota;
+      porCliente[cid].ids.push(v.id);
+    }
+
+    const lineasVencidas = [];
+    const lineasProximas = [];
+
+    for (const datos of Object.values(porCliente)) {
+      const [ay, am, ad] = datos.proxCuota.split('-');
+      const fechaFmt = `${ad}/${am}/${ay}`;
+      const monto = `$${datos.totalAdeuda.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (datos.proxCuota < hoy) {
+        lineasVencidas.push(`• ${datos.nombre}: ${monto} (venció el ${fechaFmt})`);
+      } else {
+        lineasProximas.push(`• ${datos.nombre}: ${monto} (vence el ${fechaFmt})`);
+      }
+    }
+
+    let msg = '';
+    if (lineasVencidas.length) msg += `⚠️ CUOTAS VENCIDAS:\n${lineasVencidas.join('\n')}`;
+    if (lineasProximas.length) {
+      if (msg) msg += '\n\n';
+      msg += `📅 CUOTAS PRÓXIMAS (${dias} días):\n${lineasProximas.join('\n')}`;
+    }
+    if (!msg) continue;
+
+    // Enviar email (global, solo para cuentas de sanlatorre)
+    if (userId === (await getUserIdByEmail('sanlatorre@hotmail.com'))) {
+      await sendEmail(
+        `⚠️ Cuotas — ${hoy}`,
+        `<pre style="font-family:monospace">${msg}</pre>`
+      );
+    }
+
+    // Telegram: primero intentar config per-user, luego env vars globales
+    const { data: perfil } = await adminSupabase
+      .from('perfiles').select('telegram_config').eq('id', userId).single();
+
+    let tgSent = false;
+    if (perfil?.telegram_config?.token && perfil?.telegram_config?.chat_id && perfil?.telegram_config?.activo !== false) {
+      try {
+        let token = '';
+        try { token = decrypt(perfil.telegram_config.token); } catch {}
+        if (token) {
+          await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: perfil.telegram_config.chat_id, text: msg })
+          });
+          tgSent = true;
+        }
+      } catch {}
+    }
+
+    // Fallback: env vars globales (para sanlatorre mientras no configure bot propio)
+    if (!tgSent) await sendTelegram(msg);
+
+    // Marcar notificadas
+    for (const v of ventasUser) {
+      await adminSupabase.from('ventas').update({ notificado_at: hoy }).eq('id', v.id);
+    }
+    totalNotificados += ventasUser.length;
+  }
+
+  return { notificados: totalNotificados };
 };
+
+// Helper: obtener UUID de usuario por email (con caché simple)
+let _emailUuidCache = {};
+async function getUserIdByEmail(email) {
+  if (_emailUuidCache[email]) return _emailUuidCache[email];
+  try {
+    const { data: { users } } = await adminSupabase.auth.admin.listUsers({ perPage: 200 });
+    const u = users.find(x => x.email === email);
+    if (u) _emailUuidCache[email] = u.id;
+    return u?.id || null;
+  } catch { return null; }
+}
 
 // Exportar doMpSync para el cron
 module.exports.doMpSync = doMpSync;
