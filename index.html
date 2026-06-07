@@ -2067,11 +2067,16 @@ async function renderConfig(){
   _tgPanelOpen = tgCfg;
   const esTienda = (_currentUser?.tipoCuenta || 'gestion') === 'gestion_tienda';
 
+  const _catalogUrl = cfg.tiendaPublicId
+    ? `https://chana-gestion.vercel.app/api/tienda/${cfg.tiendaPublicId}/productos`
+    : null;
+
   const tiendaSection = esTienda ? `
   <!-- MI TIENDA ONLINE -->
   <div class="card" style="margin-bottom:18px">
     <h3 style="margin-bottom:4px;font-size:15px;font-weight:500;color:var(--text)">Mi Tienda Online</h3>
     <p style="font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.6">Configurá los datos de tu tienda y la integración con MercadoPago.</p>
+
     <div class="form-group">
       <label class="form-label">Nombre de la tienda</label>
       <input type="text" class="form-input" id="cfg-tienda-nombre" value="${(cfg.tiendaNombre||'').replace(/"/g,'&quot;')}" placeholder="Ej: Chana Indumentaria">
@@ -2080,19 +2085,44 @@ async function renderConfig(){
       <label class="form-label">URL de la tienda</label>
       <input type="url" class="form-input" id="cfg-tienda-url" value="${cfg.tiendaUrl||''}" placeholder="https://mi-tienda.vercel.app">
     </div>
+
     <div class="form-group">
-      <label class="form-label">Vercel Deploy Hook <span style="color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0">(para publicar stock)</span></label>
-      ${cfg.vercelDeployHookConfigurado
-        ? `<div style="font-size:13px;color:#5CB870;margin-bottom:8px">✓ Hook configurado</div>
-           <input type="password" class="form-input" id="cfg-deploy-hook" placeholder="Pegá el nuevo hook para reemplazarlo" autocomplete="off">`
-        : `<input type="url" class="form-input" id="cfg-deploy-hook" placeholder="https://api.vercel.com/v1/integrations/deploy/...">`
-      }
-      <div style="font-size:11px;color:var(--text-3);margin-top:4px">Vercel Dashboard → proyecto → Settings → Git → Deploy Hooks → crear hook "stock"</div>
+      <label class="form-label">Tu ID de catálogo</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="text" class="form-input" value="${cfg.tiendaPublicId || '(generando...)'}" readonly
+          style="font-family:monospace;font-size:12px;color:var(--text-2);background:var(--bg-2)" id="cfg-public-id-display">
+        ${cfg.tiendaPublicId ? `<button type="button" class="btn btn-secondary btn-sm" onclick="copiarTexto('${cfg.tiendaPublicId}',this)" style="white-space:nowrap;flex-shrink:0">Copiar</button>` : ''}
+      </div>
     </div>
+
+    ${_catalogUrl ? `
+    <div class="form-group">
+      <label class="form-label">URL de tu catálogo <span style="color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0">(para el desarrollador de tu tienda)</span></label>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <input type="text" class="form-input" value="${_catalogUrl}" readonly
+          style="font-family:monospace;font-size:11px;color:var(--text-2);background:var(--bg-2);min-width:0;flex:1">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="copiarTexto('${_catalogUrl}',this)" style="white-space:nowrap;flex-shrink:0">Copiar</button>
+        <a href="${_catalogUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="white-space:nowrap;flex-shrink:0">Probar</a>
+      </div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.5">
+        Compartí esta URL con quien desarrolle tu tienda. Los productos se actualizan automáticamente al instante.
+      </div>
+    </div>
+    ` : ''}
+
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
       <button type="button" class="btn btn-primary btn-sm" id="btn-save-tienda" onclick="saveTiendaConfig()">Guardar configuración de tienda</button>
       <div id="tienda-result" style="font-size:13px"></div>
     </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Regenerar ID de catálogo</div>
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.5">
+        ⚠️ Si regenerás el ID, tenés que actualizar la variable de entorno <code>TIENDA_ID</code> en Vercel con el nuevo valor. La tienda dejará de funcionar hasta que lo actualices.
+      </p>
+      <button type="button" class="btn btn-danger btn-sm" onclick="regenTiendaId()">Regenerar ID</button>
+    </div>
+
     <div style="border-top:1px solid var(--border);padding-top:16px">
       <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">MercadoPago</div>
       <div style="font-size:13px;margin-bottom:12px">
@@ -2323,14 +2353,10 @@ async function saveTiendaConfig() {
   btn.textContent = 'Guardando...';
   btn.disabled = true;
   try {
-    const hookVal = document.getElementById('cfg-deploy-hook')?.value?.trim() || '';
-    const body = {
+    await api('PUT', '/api/perfil/tienda', {
       tiendaNombre: document.getElementById('cfg-tienda-nombre')?.value?.trim() || '',
       tiendaUrl:    document.getElementById('cfg-tienda-url')?.value?.trim()    || '',
-    };
-    // Solo enviamos el hook si se ingresó uno nuevo (evitamos pisar el valor existente con vacío)
-    if (hookVal) body.vercelDeployHook = hookVal;
-    await api('PUT', '/api/perfil/tienda', body);
+    });
     if (_currentUser) _currentUser.tiendaConfigurada = true;
     const b = document.getElementById('store-banner');
     if (b) b.style.display = 'none';
@@ -2342,6 +2368,41 @@ async function saveTiendaConfig() {
     btn.textContent = 'Guardar configuración de tienda';
     btn.disabled = false;
   }
+}
+
+async function regenTiendaId() {
+  const confirmText = prompt(
+    '⚠️ ATENCIÓN: Si regenerás el ID, la tienda dejará de funcionar hasta que actualices TIENDA_ID en Vercel con el nuevo valor.\n\nEscribí CONFIRMAR para continuar:'
+  );
+  if (confirmText !== 'CONFIRMAR') {
+    if (confirmText !== null) alert('Texto incorrecto. Escribí exactamente: CONFIRMAR');
+    return;
+  }
+  try {
+    const r = await api('POST', '/api/tienda/regen-id', {});
+    alert('ID regenerado exitosamente:\n\n' + r.tiendaPublicId + '\n\nActualizá la variable de entorno TIENDA_ID en tu proyecto de Vercel con este nuevo valor.');
+    renderConfig();
+  } catch(e) {
+    alert('Error al regenerar el ID: ' + e.message);
+  }
+}
+
+function copiarTexto(texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
 }
 
 async function savePerfil() {

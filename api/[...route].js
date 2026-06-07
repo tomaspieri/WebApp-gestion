@@ -6,6 +6,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const nodemailer       = require('nodemailer');
+const crypto           = require('crypto');
 const { encrypt, decrypt } = require('../lib/encrypt');
 
 // ── Supabase clients ──────────────────────────────────────────────────────────
@@ -126,7 +127,7 @@ async function requireAuth(req) {
   if (error || !user) return null;
 
   const { data: perfil } = await adminSupabase
-    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada, alertas_email, email_alternativo, telegram_config, meta_mensual, telefono_usuario').eq('id', user.id).single();
+    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada, alertas_email, email_alternativo, telegram_config, meta_mensual, telefono_usuario, tienda_public_id').eq('id', user.id).single();
 
   if (!perfil || !perfil.activo) return null;
   return {
@@ -137,7 +138,8 @@ async function requireAuth(req) {
     emailAlternativo: perfil.email_alternativo || '',
     telegramConfig: perfil.telegram_config || null,
     metaMensual: perfil.meta_mensual || null,
-    telefonoUsuario: perfil.telefono_usuario || ''
+    telefonoUsuario: perfil.telefono_usuario || '',
+    tiendaPublicId: perfil.tienda_public_id || null,
   };
 }
 
@@ -289,6 +291,11 @@ module.exports = async function handler(req, res) {
   if (method === 'POST' && p === 'shipping-quote') return handleShippingQuote(req, res);
   if (method === 'POST' && p === 'run-migration-v3') return handleMigrationV3(req, res);
 
+  // API pública — catálogo de tienda (no requiere auth)
+  if (segments[0] === 'tienda' && segments[2] === 'productos' && segments[1]) {
+    return handleTiendaPublica(req, res, segments[1]);
+  }
+
   // Rutas protegidas
   const user = await requireAuth(req);
   if (!user) return json(res, 401, { error: 'No autorizado' });
@@ -317,7 +324,8 @@ module.exports = async function handler(req, res) {
     user: {
       id: user.userId, email: user.email, rol: user.role,
       nombre: user.nombre, tipoCuenta: user.tipoCuenta, tiendaConfigurada: user.tiendaConfigurada,
-      metaMensual: user.metaMensual, telefonoUsuario: user.telefonoUsuario
+      metaMensual: user.metaMensual, telefonoUsuario: user.telefonoUsuario,
+      tiendaPublicId: user.tiendaPublicId,
     }
   });
   if (method === 'POST' && p === 'auth/logout')  return json(res, 200, { ok: true });
@@ -381,6 +389,9 @@ module.exports = async function handler(req, res) {
 
   // Stock
   if (method === 'POST' && p === 'stock/publicar')     return handlePublicarStock(req, res, user);
+
+  // Tienda — regenerar ID público
+  if (method === 'POST' && p === 'tienda/regen-id')    return handleRegenTiendaId(req, res, user);
 
   // MP OAuth
   if (method === 'GET'  && p === 'mp/connect')         return handleMpConnect(req, res, user);
@@ -775,6 +786,7 @@ async function handleGetConfig(req, res, user) {
     tiendaUrl:                mp?.tienda_url        || '',
     tiendaNombre:             mp?.tienda_nombre     || '',
     vercelDeployHookConfigurado: !!(mp?.vercel_deploy_hook),
+    tiendaPublicId:           user.tiendaPublicId   || null,
     mpConectado:              mp?.conectado         || false,
     mpUserId:            mp?.mp_user_id           || null,
     mpLastSync:          mp?.mp_last_sync         || null,
@@ -796,6 +808,7 @@ async function handleGetPerfil(req, res, user) {
     tiendaConfigurada: user.tiendaConfigurada,
     metaMensual:       user.metaMensual,
     telefonoUsuario:   user.telefonoUsuario,
+    tiendaPublicId:    user.tiendaPublicId,
   });
 }
 
@@ -910,6 +923,111 @@ async function handlePublicarStock(req, res, user) {
   } catch (e) {
     return json(res, 500, { error: e.message });
   }
+}
+
+// ── TIENDA PÚBLICA — Catálogo de productos ─────────────────────────────────────
+async function handleTiendaPublica(req, res, rawPublicId) {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Content-Security-Policy', "default-src 'none'");
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Método no permitido' });
+
+  // Validar formato: exactamente 32 hex lowercase — ANTES de tocar la DB (evita timing attacks)
+  if (!/^[a-f0-9]{32}$/.test(rawPublicId)) {
+    return res.status(400).json({ error: 'Solicitud inválida' });
+  }
+
+  // Rate limiting doble: por publicId y por IP
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
+  const ipHash = 'ip_' + crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+
+  const [rlTienda, rlIp] = await Promise.all([
+    rateLimit(`tienda_${rawPublicId}`, 120, 60000),
+    rateLimit(ipHash, 200, 60000),
+  ]);
+  if (!rlTienda || !rlIp) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Demasiadas solicitudes. Intentá en 60 segundos.' });
+  }
+
+  // Buscar perfil por publicId (solo activos)
+  const { data: perfil, error: perfilErr } = await adminSupabase
+    .from('perfiles')
+    .select('id, activo')
+    .eq('tienda_public_id', rawPublicId)
+    .eq('activo', true)
+    .single();
+
+  if (perfilErr || !perfil) {
+    return res.status(404).json({ error: 'Tienda no encontrada' });
+  }
+
+  // Nombre de tienda
+  const { data: mp } = await adminSupabase
+    .from('mp_conexiones').select('tienda_nombre').eq('user_id', perfil.id).single();
+
+  // Paginación
+  const urlObj = new URL(req.url, 'http://localhost');
+  const pagina = Math.max(1, parseInt(urlObj.searchParams.get('pagina') || '1', 10));
+  const limit = 100;
+  const offset = (pagina - 1) * limit;
+
+  // Productos — solo campos públicos, nunca SELECT *
+  const { data: productos, error: prodErr, count } = await adminSupabase
+    .from('productos')
+    .select('nombre, categoria, precio, imagenes, descripcion, nuevo, producto_variantes(tipo, nombre, cantidad)', { count: 'exact' })
+    .eq('user_id', perfil.id)
+    .eq('activo', true)
+    .range(offset, offset + limit - 1);
+
+  if (prodErr) {
+    console.error('handleTiendaPublica productos error:', prodErr.message);
+    return res.status(500).json({ error: 'Error del servidor' });
+  }
+
+  // Mapear: nunca exponer cantidad exacta de stock
+  const productosPublicos = (productos || []).map(p => ({
+    nombre:      p.nombre,
+    categoria:   p.categoria,
+    precio:      p.precio,
+    imagenes:    p.imagenes || [],
+    descripcion: p.descripcion || '',
+    nuevo:       !!p.nuevo,
+    variantes:   (p.producto_variantes || []).map(v => ({
+      tipo:       v.tipo,
+      nombre:     v.nombre,
+      disponible: (v.cantidad || 0) > 0,
+    })),
+  }));
+
+  // Log no bloqueante
+  logActividad(null, '', 'api_tienda_acceso',
+    `publicId: ${rawPublicId.slice(0, 8)}... ip_hash: ${ipHash} productos: ${productosPublicos.length}`
+  ).catch(() => {});
+
+  return res.status(200).json({
+    tienda:      mp?.tienda_nombre || 'Tienda',
+    productos:   productosPublicos,
+    total:       count || 0,
+    pagina,
+    hay_mas:     (offset + limit) < (count || 0),
+    actualizado: new Date().toISOString(),
+  });
+}
+
+// ── TIENDA — Regenerar ID público ─────────────────────────────────────────────
+async function handleRegenTiendaId(req, res, user) {
+  const newId = crypto.randomBytes(16).toString('hex');
+  const { error } = await adminSupabase
+    .from('perfiles').update({ tienda_public_id: newId }).eq('id', user.userId);
+  if (error) return json(res, 500, { error: 'Error al regenerar el ID' });
+  logActividad(user.userId, user.email, 'tienda_id_regenerado', 'ID de tienda regenerado').catch(() => {});
+  return json(res, 200, { tiendaPublicId: newId });
 }
 
 // ── MP OAUTH — Iniciar ────────────────────────────────────────────────────────
