@@ -44,20 +44,40 @@ ALTER TABLE gastos
   ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'otros';
 
 -- ── 5. View saldos_clientes ───────────────────────────────────────────────────
+-- Subqueries agregadas primero para evitar multiplicación de filas (cartesian product)
+DROP VIEW IF EXISTS saldos_clientes;
+
 CREATE OR REPLACE VIEW saldos_clientes AS
 SELECT
-  c.id          AS cliente_id,
+  c.id        AS cliente_id,
   c.user_id,
   c.nombre,
   c.telefono,
-  COALESCE(SUM(v.precio_venta * COALESCE(v.cantidad, 1)), 0) AS total_comprado,
-  COALESCE(SUM(p.monto), 0)                                  AS total_pagado,
-  COALESCE(SUM(v.precio_venta * COALESCE(v.cantidad, 1)), 0)
-    - COALESCE(SUM(p.monto), 0)                              AS saldo
+  c.notas,
+  COALESCE(v.total_comprado, 0)                            AS total_comprado,
+  COALESCE(v.cant_compras,   0)                            AS cant_compras,
+  COALESCE(p.total_pagado,   0)                            AS total_pagado,
+  COALESCE(v.total_comprado, 0) - COALESCE(p.total_pagado, 0) AS saldo,
+  v.ultima_compra,
+  p.ultimo_pago
 FROM clientes c
-LEFT JOIN ventas  v ON v.cliente_id = c.id AND v.user_id = c.user_id
-LEFT JOIN pagos   p ON p.cliente_id = c.id AND p.user_id = c.user_id
-GROUP BY c.id, c.user_id, c.nombre, c.telefono;
+LEFT JOIN (
+  SELECT
+    cliente_id, user_id,
+    SUM(precio_venta * COALESCE(cantidad, 1)) AS total_comprado,
+    COUNT(*)                                  AS cant_compras,
+    MAX(COALESCE(fecha_compra, created_at::date)) AS ultima_compra
+  FROM ventas
+  GROUP BY cliente_id, user_id
+) v ON v.cliente_id = c.id AND v.user_id = c.user_id
+LEFT JOIN (
+  SELECT
+    cliente_id, user_id,
+    SUM(monto)  AS total_pagado,
+    MAX(fecha)  AS ultimo_pago
+  FROM pagos
+  GROUP BY cliente_id, user_id
+) p ON p.cliente_id = c.id AND p.user_id = c.user_id;
 
 -- ── 6. Migrar pagos existentes desde ventas.adeuda ───────────────────────────
 -- Sólo para ventas donde ya se pagó algo (precio_venta * cantidad > adeuda)

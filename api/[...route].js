@@ -35,7 +35,15 @@ const MP_REDIRECT_URI  = process.env.MP_REDIRECT_URI || `${APP_URL}/api/mp/callb
 
 // ── Helpers: transforms snake_case → camelCase ────────────────────────────────
 function toCliente(r) {
-  return { id: r.id, nombre: r.nombre, telefono: r.telefono, notas: r.notas, createdAt: r.created_at };
+  return {
+    id: r.id, nombre: r.nombre, telefono: r.telefono, notas: r.notas, createdAt: r.created_at,
+    saldo: r.saldo != null ? parseFloat(r.saldo) : null,
+    totalComprado: r.total_comprado != null ? parseFloat(r.total_comprado) : null,
+    totalPagado: r.total_pagado != null ? parseFloat(r.total_pagado) : null,
+    cantCompras: r.cant_compras != null ? parseInt(r.cant_compras) : null,
+    ultimaCompra: r.ultima_compra || null,
+    ultimoPago: r.ultimo_pago || null,
+  };
 }
 
 function toVenta(r) {
@@ -420,11 +428,25 @@ async function handleLogin(req, res) {
 
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 async function handleGetClientes(req, res, user) {
-  let q = adminSupabase.from('clientes').select('*').order('nombre');
-  if (user.role !== 'admin') q = q.eq('user_id', user.userId);
-  const { data, error } = await q;
+  // Traer clientes junto con saldo de saldos_clientes en una sola query
+  let qClientes = adminSupabase.from('clientes').select('*').order('nombre');
+  if (user.role !== 'admin') qClientes = qClientes.eq('user_id', user.userId);
+  const { data: clientesData, error } = await qClientes;
   if (error) return json(res, 500, { error: error.message });
-  return json(res, 200, data.map(toCliente));
+
+  // Enriquecer con saldos
+  const { data: saldos } = await adminSupabase
+    .from('saldos_clientes')
+    .select('cliente_id, saldo, total_comprado, total_pagado, cant_compras, ultima_compra, ultimo_pago')
+    .eq('user_id', user.userId);
+
+  const saldoMap = {};
+  (saldos || []).forEach(s => { saldoMap[s.cliente_id] = s; });
+
+  return json(res, 200, clientesData.map(c => {
+    const s = saldoMap[c.id] || {};
+    return toCliente({ ...c, ...s });
+  }));
 }
 
 async function handlePostCliente(req, res, user) {

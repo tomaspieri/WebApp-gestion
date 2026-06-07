@@ -1389,7 +1389,7 @@ function closeSidebar(){
 function renderDashboard(){
   const vencidas=ventas.filter(v=>(parseFloat(v.adeuda)||0)>0&&isVencida(v.proxCuota));
   const proximas=ventas.filter(v=>(parseFloat(v.adeuda)||0)>0&&isProxima(v.proxCuota)&&!isVencida(v.proxCuota));
-  const totalDeuda=ventas.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
+  const totalDeuda=clientes.reduce((s,c)=>s+(parseFloat(c.saldo)||0),0);
   const totalVtas=ventas.reduce((s,v)=>s+(parseFloat(v.precioVenta)||0),0);
   const totalGastos=gastos.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
   const ganNeta=totalVtas-totalGastos;
@@ -1519,11 +1519,11 @@ function filterClientes(){
   let html='';
   if(!list.length){ html=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'No hay clientes todavía'}</div></div>`; }
   else{ html=`<div class="client-list">`+list.map(c=>{
-    const vs=ventasByCliente(c.id), deuda=vs.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
+    const vs=ventasByCliente(c.id), saldo=parseFloat(c.saldo)||0;
     return`<div class="client-card" onclick="showPage('cliente-detalle','${c.id}')">
       <div class="avatar" style="background:${avatarColor(c.nombre)}">${initials(c.nombre)}</div>
       <div style="flex:1;min-width:0"><div class="client-name">${c.nombre}</div><div class="client-meta">${c.telefono||'Sin teléfono'} · ${vs.length} venta${vs.length!==1?'s':''}</div></div>
-      <div style="text-align:right;flex-shrink:0"><div class="client-deuda ${deuda===0?'zero':'pos'}">${fmt(deuda)}</div><div style="font-size:11px;color:var(--text-2)">adeuda</div></div>
+      <div style="text-align:right;flex-shrink:0"><div class="client-deuda ${saldo<=0?'zero':'pos'}">${fmt(saldo)}</div><div style="font-size:11px;color:var(--text-2)">saldo</div></div>
     </div>`;
   }).join('')+`</div>`; }
   document.getElementById('clientes-list').innerHTML=html;
@@ -1539,18 +1539,23 @@ function diasSinPagar(vs) {
   return Math.floor((Date.now() - new Date(ref).getTime()) / 86400000);
 }
 
-function renderDeudas(){
-  const conDeuda=clientes.map(c=>{
-    const vs=ventasByCliente(c.id).filter(v=>(parseFloat(v.adeuda)||0)>0);
-    if(!vs.length) return null;
-    const totalAdeuda=vs.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
-    const ultimaFecha=vs.map(v=>v.fechaCompra||'').filter(Boolean).sort().reverse()[0]||'';
+function buildDeudaList(){
+  return clientes.map(c=>{
+    const saldo=parseFloat(c.saldo)||0;
+    if(saldo<=0) return null;
+    const vs=ventasByCliente(c.id);
     const proxCuota=vs.map(v=>v.proxCuota||'').filter(Boolean).sort()[0]||'';
-    const dias=diasSinPagar(vs);
-    return {c, vs, totalAdeuda, ultimaFecha, proxCuota, dias};
+    const ultimaFecha=c.ultimaCompra||vs.map(v=>v.fechaCompra||'').filter(Boolean).sort().reverse()[0]||'';
+    // días sin pagar: desde el último pago, o desde la última compra si nunca pagó
+    const refFecha=c.ultimoPago||c.ultimaCompra||'';
+    const dias=refFecha?Math.floor((Date.now()-new Date(refFecha).getTime())/86400000):null;
+    return {c, saldo, ultimaFecha, proxCuota, dias};
   }).filter(Boolean);
+}
 
-  const total=conDeuda.reduce((s,d)=>s+d.totalAdeuda,0);
+function renderDeudas(){
+  const conDeuda=buildDeudaList();
+  const total=conDeuda.reduce((s,d)=>s+d.saldo,0);
 
   setMain(`
   <div class="page-header">
@@ -1580,19 +1585,11 @@ function setDeudaOrden(orden){ deudaOrden=orden; renderDeudas(); }
 
 function filterDeudas(){
   const q=(document.getElementById('search-deudas')?.value||'').toLowerCase();
-  let conDeuda=clientes.map(c=>{
-    const vs=ventasByCliente(c.id).filter(v=>(parseFloat(v.adeuda)||0)>0);
-    if(!vs.length) return null;
-    const totalAdeuda=vs.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
-    const ultimaFecha=vs.map(v=>v.fechaCompra||'').filter(Boolean).sort().reverse()[0]||'';
-    const proxCuota=vs.map(v=>v.proxCuota||'').filter(Boolean).sort()[0]||'';
-    const dias=diasSinPagar(vs);
-    return {c, vs, totalAdeuda, ultimaFecha, proxCuota, dias};
-  }).filter(Boolean);
+  let conDeuda=buildDeudaList();
 
   if(q) conDeuda=conDeuda.filter(d=>d.c.nombre.toLowerCase().includes(q));
-  if(deudaOrden==='mayor')   conDeuda.sort((a,b)=>b.totalAdeuda-a.totalAdeuda);
-  if(deudaOrden==='menor')   conDeuda.sort((a,b)=>a.totalAdeuda-b.totalAdeuda);
+  if(deudaOrden==='mayor')   conDeuda.sort((a,b)=>b.saldo-a.saldo);
+  if(deudaOrden==='menor')   conDeuda.sort((a,b)=>a.saldo-b.saldo);
   if(deudaOrden==='reciente')conDeuda.sort((a,b)=>b.ultimaFecha.localeCompare(a.ultimaFecha));
   if(deudaOrden==='antiguo') conDeuda.sort((a,b)=>a.ultimaFecha.localeCompare(b.ultimaFecha));
 
@@ -1600,7 +1597,7 @@ function filterDeudas(){
   if(!conDeuda.length){
     html=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M20 6 9 17l-5-5"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'Ningún cliente tiene saldo pendiente'}</div></div>`;
   } else {
-    html=`<div class="client-list">`+conDeuda.map(({c,vs,totalAdeuda,ultimaFecha,proxCuota,dias})=>{
+    html=`<div class="client-list">`+conDeuda.map(({c,saldo,ultimaFecha,proxCuota,dias})=>{
       const vencida=proxCuota&&isVencida(proxCuota);
       const proxima=proxCuota&&isProxima(proxCuota)&&!vencida;
       const diasColor = dias===null?'var(--text-2)':dias>30?'var(--danger)':dias>15?'var(--warning)':'var(--text-2)';
@@ -1614,7 +1611,7 @@ function filterDeudas(){
         </div>
         <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <div>
-            <div style="font-size:16px;font-weight:600;color:var(--danger)">${fmt(totalAdeuda)}</div>
+            <div style="font-size:16px;font-weight:600;color:var(--danger)">${fmt(saldo)}</div>
             <div style="font-size:11px;color:var(--text-2)">saldo</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="openModalPago('${c.id}','${c.nombre.replace(/'/g,"\\'")}')">Registrar pago</button>
