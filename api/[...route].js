@@ -1445,18 +1445,31 @@ async function handleAdminVentasGlobales(req, res) {
   return json(res, 200, result);
 }
 
+const ACTIVIDAD_EXCLUIR = new Set([
+  'login_exitoso', 'login_fallido', 'session_check', 'page_view', 'token_refresh',
+  'api_tienda_acceso',
+]);
+
 async function handleAdminActividad(req, res) {
   const { data: logs } = await adminSupabase
     .from('logs_actividad')
     .select('accion, detalle, created_at, ip')
     .order('created_at', { ascending: false })
-    .limit(100);
-  return json(res, 200, (logs || []).map(l => ({
-    accion: l.accion,
-    email: l.detalle?.split(' — ')?.[0] || '—',
-    createdAt: l.created_at,
-    ip: l.ip || ''
-  })));
+    .limit(500);
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const rows = (logs || [])
+    .filter(l => !ACTIVIDAD_EXCLUIR.has(l.accion))
+    .slice(0, 200)
+    .map(l => {
+      const partes = (l.detalle || '').split(' — ');
+      const tieneEmail = partes.length > 1 && EMAIL_RE.test(partes[0]);
+      const email  = tieneEmail ? partes[0] : '—';
+      const detalle = tieneEmail ? partes.slice(1).join(' — ') : (l.detalle || '');
+      return { accion: l.accion, email, detalle, createdAt: l.created_at, ip: l.ip || '' };
+    });
+
+  return json(res, 200, rows);
 }
 
 // ── PAGOS (CUENTA CORRIENTE) ──────────────────────────────────────────────────

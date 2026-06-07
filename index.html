@@ -163,13 +163,13 @@ tfoot tr td{font-weight:600;color:var(--text);border-top:1px solid var(--border)
 .mp-connect-panel{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-top:4px}
 .mp-connect-panel.connected{border-color:rgba(58,125,68,.4)}
 /* ── AUTH ── */
-.auth-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center}
+.auth-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;padding:20px}
 .auth-overlay.open{display:flex}
 .auth-loading{display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:14px}
-body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body.app-hidden #app-main,body.app-hidden .sidebar-overlay,body.app-hidden #store-banner,body.app-hidden #impersonate-bar{display:none!important}
-.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:32px;width:440px;max-width:95vw}
-.auth-logo{text-align:center;font-size:18px;font-weight:600;margin-bottom:4px;color:var(--text);letter-spacing:.02em}
-.auth-subtitle{text-align:center;font-size:13px;color:var(--text-2);margin-bottom:22px}
+body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body.app-hidden .mob-header,body.app-hidden #app-main,body.app-hidden .sidebar-overlay,body.app-hidden #store-banner,body.app-hidden #impersonate-bar{display:none!important}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:440px;max-width:100%}
+.auth-logo{text-align:center;font-size:20px;font-weight:600;margin-bottom:4px;color:var(--text);letter-spacing:.12em}
+.auth-subtitle{text-align:center;font-size:13px;color:var(--text-2);margin-bottom:22px;letter-spacing:.04em}
 .auth-error{background:rgba(139,32,32,.1);border:1px solid rgba(139,32,32,.3);color:#c05050;padding:10px 13px;border-radius:6px;font-size:13px;margin-bottom:14px;display:none}
 .auth-link{font-size:13px;color:var(--text-2);text-align:center;margin-top:14px}
 .auth-link a{color:var(--accent);cursor:pointer;text-decoration:none}
@@ -249,6 +249,25 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 .toggle-switch input:checked+.toggle-slider{background:var(--accent)}
 .toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px);background:#fff}
 
+/* ── FIX 1: Prevenir zoom automático iOS en inputs ── */
+input,select,textarea{font-size:16px!important}
+
+/* ── MOBILE HEADER BAR ── */
+.mob-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 4px;align-items:center;justify-content:space-between;z-index:150}
+.mob-header-btn{background:none;border:none;color:var(--text);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;transition:background .15s;flex-shrink:0}
+.mob-header-btn:hover{background:var(--surface-2)}
+.mob-header-title{font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--text)}
+
+/* ── MOBILE SIDEBAR USER HEADER ── */
+.mob-sidebar-header{display:none;padding:14px 16px 12px;border-bottom:1px solid var(--border)}
+.mob-sidebar-user{display:flex;align-items:center;gap:10px}
+.mob-sidebar-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.mob-sidebar-info{flex:1;min-width:0}
+.mob-sidebar-name{font-size:14px;font-weight:500;color:var(--text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mob-sidebar-email{font-size:12px;color:var(--text-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mob-sidebar-theme{background:none;border:none;cursor:pointer;color:var(--text-2);padding:6px;display:flex;align-items:center;border-radius:6px;transition:color .15s;flex-shrink:0}
+.mob-sidebar-theme:hover{color:var(--text)}
+
 /* ── RESPONSIVE TABLES ── */
 @media(max-width:600px){
   .table-responsive thead{display:none}
@@ -271,15 +290,22 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 /* ── MOBILE (<= 700px) ── */
 @media(max-width:700px){
   /* Sidebar: oculto por defecto, desliza desde la izquierda */
-  .sidebar{display:flex!important;transform:translateX(-100%);transition:transform .25s ease;box-shadow:none;width:260px}
+  .sidebar{display:flex!important;transform:translateX(-100%);transition:transform .25s ease;box-shadow:none;width:280px}
   .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.3)}
-  /* Botón hamburger — visible en mobile */
-  .menu-btn{display:flex!important;align-items:center;justify-content:center}
-  /* Main sin margen, con padding para menu-btn y bottom nav */
+  /* Header mobile bar — reemplaza el botón flotante */
+  .mob-header{display:flex!important}
+  /* Botón hamburger flotante — oculto, reemplazado por mob-header */
+  .menu-btn{display:none!important}
+  /* Bottom nav — eliminado en favor del sidebar */
+  .mob-nav{display:none!important}
+  /* Main sin margen, padding top para header bar, sin bottom padding */
   .main{margin-left:0}
-  .main-content{padding:56px 12px 74px}
-  /* Bottom nav */
-  .mob-nav{display:block}
+  .main-content{padding:68px 12px 24px}
+  /* Sidebar mobile: reorganizar secciones */
+  .sidebar-logo{display:none!important}
+  #mob-sidebar-header{display:block!important}
+  #sidebar-tools{display:none!important}
+  .sidebar-footer{display:none!important}
   /* Tipografía reducida */
   .page-title{font-size:16px}
   .stat-value{font-size:20px}
@@ -302,6 +328,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
     background:var(--border);border-radius:2px;
     margin:0 auto 14px;
   }
+  .modal{padding-bottom:max(16px, env(safe-area-inset-bottom))}
   .btn{padding:8px 12px;font-size:12px}
   table{font-size:12px}
   th,td{padding:8px 10px}
@@ -314,6 +341,8 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
   .page-header{flex-direction:column;align-items:flex-start;gap:8px}
   /* Cuenta corriente en mobile: más compacta */
   .cc-entry-actions{opacity:1}
+  /* Botón de logout en Config — ancho completo en mobile */
+  .config-logout-btn{display:flex!important;width:100%;height:48px;border-radius:8px}
 }
 
 @media(max-width:400px){
@@ -456,14 +485,42 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
   </div>
 </div>
 
+<!-- Header bar mobile (reemplaza el botón flotante) -->
+<div class="mob-header" id="mob-header">
+  <button class="mob-header-btn" onclick="toggleSidebar()" aria-label="Menú">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <span class="mob-header-title">CHANA</span>
+  <button class="mob-header-btn" onclick="openSearch()" aria-label="Buscar">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+  </button>
+</div>
+
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()">☰</button>
 
 <!-- Sidebar (renderizado por JS según rol) -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-logo" id="sidebar-logo">CHANA<span>Gestión de Ventas</span></div>
+  <!-- Header de usuario (visible solo en mobile) -->
+  <div class="mob-sidebar-header" id="mob-sidebar-header">
+    <div class="mob-sidebar-user">
+      <div class="mob-sidebar-avatar" id="mob-sidebar-avatar">?</div>
+      <div class="mob-sidebar-info">
+        <div class="mob-sidebar-name" id="mob-sidebar-name">—</div>
+        <div class="mob-sidebar-email" id="mob-sidebar-email">—</div>
+      </div>
+      <button class="mob-sidebar-theme" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema">
+        <svg id="mob-sidebar-theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+      </button>
+    </div>
+  </div>
   <nav id="sidebar-nav"></nav>
-  <div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:6px">
+  <div id="sidebar-tools" style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:6px">
     <button id="btn-ocultar" onclick="toggleOcultar()" style="flex:1;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;transition:all .15s">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       Ocultar
@@ -943,10 +1000,12 @@ const SVG_SUN  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2
 const SVG_MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 
 function initTheme() {
-  const icon = document.getElementById('theme-icon');
-  if (!icon) return;
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-  icon.innerHTML = isDark ? SVG_MOON : SVG_SUN;
+  const svg = isDark ? SVG_MOON : SVG_SUN;
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.innerHTML = svg;
+  const mobIcon = document.getElementById('mob-sidebar-theme-icon');
+  if (mobIcon) mobIcon.innerHTML = svg;
 }
 
 function toggleTheme() {
@@ -1261,11 +1320,24 @@ function renderUserBadge() {
   const container = document.getElementById('user-badge-container');
   const nameEl = document.getElementById('user-badge-name');
   const roleEl = document.getElementById('user-badge-role');
-  nameEl.textContent = _currentUser.nombre || _currentUser.email || 'Usuario';
+  const nombre = _currentUser.nombre || _currentUser.email || 'Usuario';
+  nameEl.textContent = nombre;
   const rol = _currentUser.rol || 'usuario';
   roleEl.textContent = rol === 'admin' ? 'admin' : 'usuario';
   roleEl.className = 'user-badge-role ' + rol;
   container.style.display = 'block';
+
+  // Poblar header del sidebar mobile
+  const mobAvatar = document.getElementById('mob-sidebar-avatar');
+  const mobName   = document.getElementById('mob-sidebar-name');
+  const mobEmail  = document.getElementById('mob-sidebar-email');
+  if (mobAvatar) {
+    mobAvatar.textContent = initials(nombre);
+    if (typeof avatarColor === 'function') mobAvatar.style.background = avatarColor(nombre);
+  }
+  if (mobName)  mobName.textContent  = nombre;
+  if (mobEmail) mobEmail.textContent = _currentUser.email || '';
+
   initTheme();
 }
 
@@ -1683,7 +1755,7 @@ function filterDeudas(){
             <div style="font-size:11px;color:var(--text-2)">saldo</div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
-            ${(()=>{const waMsg=`Hola ${c.nombre}! Te recuerdo que tenés un saldo pendiente de ${fmt(saldo)} 🙏 Cualquier consulta avisame.`;const waLink=buildWaLink(c.telefono,waMsg);return waLink?`<a href="${waLink}" target="_blank" title="WhatsApp" class="btn btn-secondary btn-sm" style="padding:4px 8px;color:var(--text-2)" onmouseover="this.style.color='#25D366'" onmouseout="this.style.color='var(--text-2)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>`:`<button class="btn btn-secondary btn-sm" style="padding:4px 8px;opacity:.3;cursor:not-allowed" title="Agregá un teléfono al cliente para poder contactarlo por WhatsApp" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text-3)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>`;})()}
+            ${(()=>{const waMsg=`Hola ${c.nombre}! Te recuerdo que tenés un saldo pendiente de ${fmt(saldo)} 🙏 Cualquier consulta avisame.`;const waLink=buildWaLink(c.telefono,waMsg);return waLink?`<a href="${waLink}" target="_blank" title="WhatsApp" class="btn btn-secondary btn-sm" style="padding:4px 8px;color:var(--text-2)" onmouseover="this.style.color='#25D366'" onmouseout="this.style.color='var(--text-2)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>`:`<button class="btn btn-secondary btn-sm" style="padding:4px 8px;opacity:.55;cursor:not-allowed;color:var(--text-3)" title="Sin teléfono — agregalo en la ficha del cliente para poder contactarla" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>`;})()}
             <button class="btn btn-primary btn-sm" onclick="openModalPago('${c.id}','${c.nombre.replace(/'/g,"\\'")}',${saldo})">Registrar pago</button>
           </div>
         </div>
@@ -2259,6 +2331,14 @@ async function renderConfig(){
       <button type="button" class="btn btn-primary" id="btn-save-perfil" onclick="savePerfil()">Guardar cambios</button>
       <div id="perfil-result" style="font-size:13px"></div>
     </div>
+  </div>
+
+  <!-- Botón cerrar sesión (visible en mobile, sutil en desktop) -->
+  <div style="margin-top:16px">
+    <button type="button" class="btn btn-danger config-logout-btn" onclick="doLogout()" style="display:none;justify-content:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Cerrar sesión
+    </button>
   </div>`);
 }
 
@@ -3506,21 +3586,61 @@ async function renderAdminVentas() {
   } catch(e) { setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`); }
 }
 
+function _fmtFecha(isoStr) {
+  if (!isoStr) return '—';
+  const d = new Date(isoStr);
+  if (isNaN(d)) return isoStr;
+  const hoy  = new Date(); hoy.setHours(0,0,0,0);
+  const ayer = new Date(hoy); ayer.setDate(ayer.getDate()-1);
+  const dia  = new Date(d); dia.setHours(0,0,0,0);
+  const hora = d.toLocaleString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  if (dia.getTime()===hoy.getTime())  return `Hoy, ${hora}`;
+  if (dia.getTime()===ayer.getTime()) return `Ayer, ${hora}`;
+  return d.toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+let _actividadFiltros = { accion: '', usuario: '' };
+
 async function renderAdminActividad() {
   try {
     const logs = await api('GET', '/api/admin/actividad');
-    const rows = logs.map(a=>`<tr>
-      <td style="font-size:12px;color:var(--text-2)">${new Date(a.created_at).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
-      <td style="color:var(--text-2);font-size:12px">${a.email||'—'}</td>
-      <td>${a.accion}</td>
-      <td style="color:var(--text-2);font-size:12px">${a.detalle||'—'}</td>
-    </tr>`).join('');
+
+    const usuariosSet = new Set(logs.map(a=>a.email).filter(e=>e&&e!=='—'));
+    const accionesSet = new Set(logs.map(a=>a.accion).filter(Boolean));
+
+    const renderRows = () => {
+      let filtrados = logs;
+      if (_actividadFiltros.accion) filtrados = filtrados.filter(a=>a.accion===_actividadFiltros.accion);
+      if (_actividadFiltros.usuario) filtrados = filtrados.filter(a=>a.email===_actividadFiltros.usuario);
+      if (!filtrados.length) return '<tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:24px">Sin resultados</td></tr>';
+      return filtrados.map(a=>`<tr>
+        <td style="font-size:12px;color:var(--text-2);white-space:nowrap">${_fmtFecha(a.createdAt)}</td>
+        <td style="color:var(--text-2);font-size:12px">${a.email||'—'}</td>
+        <td style="font-size:13px">${a.accion}</td>
+        <td style="color:var(--text-2);font-size:12px">${a.detalle||'—'}</td>
+      </tr>`).join('');
+    };
+
     setMain(`
-    <div class="page-header"><div><div class="page-title">Actividad</div><div class="page-subtitle">Últimas acciones en la plataforma</div></div></div>
+    <div class="page-header"><div><div class="page-title">Actividad</div><div class="page-subtitle">Acciones relevantes en la plataforma</div></div></div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <select id="act-fil-accion" class="form-input" style="width:auto;min-width:180px" onchange="_actividadFiltros.accion=this.value;document.getElementById('act-tbody').innerHTML=renderActividadRows()">
+        <option value="">Todas las acciones</option>
+        ${[...accionesSet].map(a=>`<option value="${a}">${a}</option>`).join('')}
+      </select>
+      <select id="act-fil-usuario" class="form-input" style="width:auto;min-width:200px" onchange="_actividadFiltros.usuario=this.value;document.getElementById('act-tbody').innerHTML=renderActividadRows()">
+        <option value="">Todos los usuarios</option>
+        ${[...usuariosSet].map(u=>`<option value="${u}">${u}</option>`).join('')}
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="_actividadFiltros={accion:'',usuario:''};document.getElementById('act-fil-accion').value='';document.getElementById('act-fil-usuario').value='';document.getElementById('act-tbody').innerHTML=renderActividadRows()">Limpiar</button>
+    </div>
     <div class="card"><div class="table-container"><table>
       <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--text-3)">Sin actividad</td></tr>'}</tbody>
+      <tbody id="act-tbody">${renderRows()}</tbody>
     </table></div></div>`);
+
+    // Exponer la función para los filtros inline
+    window.renderActividadRows = renderRows;
   } catch(e) { setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`); }
 }
 
@@ -3529,7 +3649,6 @@ async function renderAdminConfig() {
     const cfg = await api('GET', '/api/admin/config');
     const registrosHabilitados = cfg.registros_habilitados !== 'false';
     const emailSoporte = cfg.email_soporte || '';
-    const bienvenida = cfg.mensaje_bienvenida || '';
     setMain(`
     <div class="page-header"><div><div class="page-title">Configuración del sistema</div><div class="page-subtitle">Settings globales de la plataforma</div></div></div>
     <div class="card" style="max-width:600px">
@@ -3544,10 +3663,6 @@ async function renderAdminConfig() {
         <div class="form-group" style="margin-top:14px">
           <label class="form-label">Email de soporte</label>
           <input type="email" class="form-input" id="admin-cfg-email" value="${emailSoporte}" placeholder="soporte@miapp.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mensaje de bienvenida</label>
-          <textarea class="form-input" id="admin-cfg-bienvenida" rows="3" placeholder="Bienvenido a la plataforma...">${bienvenida}</textarea>
         </div>
         <div class="form-actions" style="justify-content:flex-start">
           <button type="submit" class="btn btn-primary">Guardar cambios</button>
@@ -3565,7 +3680,6 @@ async function saveAdminConfig(e) {
     await api('POST', '/api/admin/config', {
       registros_habilitados: document.getElementById('admin-cfg-registros').checked ? 'true' : 'false',
       email_soporte: document.getElementById('admin-cfg-email').value.trim(),
-      mensaje_bienvenida: document.getElementById('admin-cfg-bienvenida').value.trim(),
     });
     el.innerHTML = `<div class="alert-box" style="background:rgba(58,125,68,.1);border-color:rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">Configuración guardada</div></div>`;
   } catch(err) {
