@@ -18,11 +18,13 @@ DROP TABLE IF EXISTS rate_limits         CASCADE;
 
 -- PERFILES
 CREATE TABLE perfiles (
-  id         UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  nombre     TEXT DEFAULT '',
-  rol        TEXT DEFAULT 'usuario' CHECK (rol IN ('admin', 'usuario')),
-  activo     BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  id                  UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  nombre              TEXT DEFAULT '',
+  rol                 TEXT DEFAULT 'usuario' CHECK (rol IN ('admin', 'usuario')),
+  activo              BOOLEAN DEFAULT true,
+  tipo_cuenta         TEXT DEFAULT 'gestion' CHECK (tipo_cuenta IN ('gestion', 'gestion_tienda')),
+  tienda_configurada  BOOLEAN DEFAULT false,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- CONEXIÓN MERCADOPAGO por usuario (tokens encriptados AES-256-GCM)
@@ -136,12 +138,36 @@ CREATE TABLE contadores (
   venta_counter INTEGER DEFAULT 0
 );
 
--- RATE LIMITING (para login)
+-- RATE LIMITING (para login y registro)
 CREATE TABLE rate_limits (
   key      TEXT PRIMARY KEY,
   count    INTEGER DEFAULT 0,
   reset_at TIMESTAMPTZ
 );
+
+-- LOGS DE ACTIVIDAD (sin RLS — solo service key)
+CREATE TABLE logs_actividad (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  accion     TEXT NOT NULL,
+  detalle    TEXT DEFAULT '',
+  ip         TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- CONFIGURACIÓN DEL SISTEMA (sin RLS — solo service key)
+CREATE TABLE config_sistema (
+  clave      TEXT PRIMARY KEY,
+  valor      TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Valores por defecto de config_sistema
+INSERT INTO config_sistema (clave, valor) VALUES
+  ('registros_habilitados', 'true'),
+  ('email_soporte', ''),
+  ('mensaje_bienvenida', '')
+ON CONFLICT (clave) DO NOTHING;
 
 -- ÍNDICES
 CREATE INDEX idx_clientes_user    ON clientes(user_id);
@@ -180,10 +206,14 @@ CREATE POLICY "own_variantes" ON producto_variantes FOR ALL
 --   tomaspieri@outlook.com → 9f14c82c-82b0-4bb2-a341-30b8e0d7c1de  (admin)
 --   sanlatorre@hotmail.com → 920a408f-79b7-4fb1-945f-c99eb301b257  (usuario)
 
-INSERT INTO perfiles (id, nombre, rol) VALUES
-  ('9f14c82c-82b0-4bb2-a341-30b8e0d7c1de', 'Tomas', 'admin'),
-  ('920a408f-79b7-4fb1-945f-c99eb301b257', 'Chana', 'usuario')
+INSERT INTO perfiles (id, nombre, rol, tipo_cuenta) VALUES
+  ('9f14c82c-82b0-4bb2-a341-30b8e0d7c1de', 'Tomas', 'admin',   'gestion'),
+  ('920a408f-79b7-4fb1-945f-c99eb301b257', 'Chana', 'usuario', 'gestion_tienda')
 ON CONFLICT (id) DO NOTHING;
+
+-- Para DBs ya existentes: agregar columnas si no existen
+ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS tipo_cuenta TEXT DEFAULT 'gestion' CHECK (tipo_cuenta IN ('gestion', 'gestion_tienda'));
+ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS tienda_configurada BOOLEAN DEFAULT false;
 
 INSERT INTO contadores (user_id, venta_counter) VALUES
   ('920a408f-79b7-4fb1-945f-c99eb301b257', 0)

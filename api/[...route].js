@@ -109,10 +109,14 @@ async function requireAuth(req) {
   if (error || !user) return null;
 
   const { data: perfil } = await adminSupabase
-    .from('perfiles').select('rol, activo').eq('id', user.id).single();
+    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada').eq('id', user.id).single();
 
   if (!perfil || !perfil.activo) return null;
-  return { userId: user.id, email: user.email, role: perfil.rol };
+  return {
+    userId: user.id, email: user.email, role: perfil.rol,
+    nombre: perfil.nombre, tipoCuenta: perfil.tipo_cuenta || 'gestion',
+    tiendaConfigurada: perfil.tienda_configurada || false
+  };
 }
 
 // ── Body parsing (Vercel no parsea automáticamente) ────────────────────────────
@@ -257,16 +261,41 @@ module.exports = async function handler(req, res) {
   const method = req.method;
 
   // Rutas públicas
-  if (method === 'POST' && p === 'auth/login') return handleLogin(req, res);
-  if (method === 'GET'  && p === 'mp/callback') return handleMpCallback(req, res);
+  if (method === 'POST' && p === 'auth/login')    return handleLogin(req, res);
+  if (method === 'POST' && p === 'auth/registro') return handleRegistro(req, res);
+  if (method === 'GET'  && p === 'mp/callback')   return handleMpCallback(req, res);
   if (method === 'POST' && p === 'shipping-quote') return handleShippingQuote(req, res);
 
   // Rutas protegidas
   const user = await requireAuth(req);
   if (!user) return json(res, 401, { error: 'No autorizado' });
 
+  // Admin routes
+  if (segments[0] === 'admin') {
+    if (user.role !== 'admin') return json(res, 403, { error: 'Sin permiso' });
+    const adminRl = await rateLimit(`admin:${user.userId}`, 60, 60000);
+    if (!adminRl) return json(res, 429, { error: 'Demasiadas solicitudes' });
+    if (method === 'GET'  && p === 'admin/stats')                               return handleAdminStats(req, res);
+    if (method === 'GET'  && p === 'admin/usuarios')                             return handleAdminGetUsuarios(req, res);
+    if (method === 'PUT'  && segments[0]==='admin' && segments[1]==='usuarios' && segments[2] && !segments[3]) return handleAdminPutUsuario(req, res, segments[2]);
+    if (method === 'POST' && segments[1]==='usuarios' && segments[2]==='crear')  return handleAdminCrearUsuario(req, res);
+    if (method === 'POST' && segments[1]==='usuarios' && segments[3]==='activar')   return handleAdminToggleUsuario(req, res, segments[2], true);
+    if (method === 'POST' && segments[1]==='usuarios' && segments[3]==='desactivar') return handleAdminToggleUsuario(req, res, segments[2], false);
+    if (method === 'POST' && segments[1]==='usuarios' && segments[3]==='reset-password') return handleAdminResetPassword(req, res, segments[2]);
+    if (method === 'GET'  && p === 'admin/ventas-globales')                      return handleAdminVentasGlobales(req, res);
+    if (method === 'GET'  && p === 'admin/actividad')                            return handleAdminActividad(req, res);
+    if (method === 'GET'  && p === 'admin/config')                               return handleAdminGetConfig(req, res);
+    if (method === 'POST' && p === 'admin/config')                               return handleAdminPostConfig(req, res);
+    return json(res, 404, { error: 'Ruta admin no encontrada' });
+  }
+
   // Auth
-  if (method === 'GET'  && p === 'auth/me')     return json(res, 200, { user });
+  if (method === 'GET'  && p === 'auth/me') return json(res, 200, {
+    user: {
+      id: user.userId, email: user.email, rol: user.role,
+      nombre: user.nombre, tipoCuenta: user.tipoCuenta, tiendaConfigurada: user.tiendaConfigurada
+    }
+  });
   if (method === 'POST' && p === 'auth/logout')  return json(res, 200, { ok: true });
 
   // Clientes
@@ -349,9 +378,16 @@ async function handleLogin(req, res) {
 
   if (!perfil?.activo) return json(res, 403, { error: 'Cuenta desactivada' });
 
+  await logActividad(data.user.id, data.user.email, 'login_exitoso', '', ip);
+
   return json(res, 200, {
     token: data.session.access_token,
-    user: { id: data.user.id, email: data.user.email, role: perfil.rol, nombre: perfil.nombre }
+    user: {
+      id: data.user.id, email: data.user.email,
+      rol: perfil.rol, nombre: perfil.nombre,
+      tipoCuenta: perfil.tipo_cuenta || 'gestion',
+      tiendaConfigurada: perfil.tienda_configurada || false
+    }
   });
 }
 
@@ -935,6 +971,227 @@ async function handleUploadImagenes(req, res, user) {
     error: 'Upload directo no disponible en serverless.',
     hint: 'Subí las imágenes directamente a Supabase Storage desde el cliente con la anon key.'
   });
+}
+
+// ── REGISTRO ──────────────────────────────────────────────────────────────────
+async function handleRegistro(req, res) {
+  const body = await parseBody(req);
+  const { nombre, email, password, tipoCuenta, tiendaNombre, tiendaUrl, vercelDeployHook, tiendaConfigurada } = body;
+
+  if (!nombre || !email || !password) return json(res, 400, { error: 'Nombre, email y contraseña son requeridos' });
+  if (password.length < 8) return json(res, 400, { error: 'La contraseña debe tener al menos 8 caracteres' });
+  if (!['gestion','gestion_tienda'].includes(tipoCuenta)) return json(res, 400, { error: 'Tipo de cuenta inválido' });
+
+  // Verificar si los registros están habilitados
+  const { data: cfgRegistros } = await adminSupabase.from('config_sistema').select('valor').eq('clave', 'registros_habilitados').single();
+  if (cfgRegistros?.valor === 'false') return json(res, 403, { error: 'El registro de nuevas cuentas está deshabilitado.' });
+
+  // Rate limit: 3 registros por IP por hora
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  const allowed = await rateLimit(`registro:${ip}`, 3, 60 * 60 * 1000);
+  if (!allowed) return json(res, 429, { error: 'Demasiados registros desde tu IP. Esperá 1 hora.' });
+
+  // Crear usuario en Supabase Auth
+  const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+    email, password, email_confirm: true,
+    user_metadata: { nombre }
+  });
+  if (authError) {
+    if (authError.message?.includes('already registered')) return json(res, 409, { error: 'Este email ya está registrado.' });
+    return json(res, 500, { error: authError.message });
+  }
+
+  const userId = authData.user.id;
+
+  // Crear perfil
+  await adminSupabase.from('perfiles').insert({
+    id: userId, nombre, rol: 'usuario', activo: true,
+    tipo_cuenta: tipoCuenta,
+    tienda_configurada: !!tiendaConfigurada
+  });
+
+  // Si tiene datos de tienda, guardar
+  if (tipoCuenta === 'gestion_tienda' && tiendaUrl && tiendaNombre) {
+    await adminSupabase.from('mp_conexiones').upsert({
+      user_id: userId,
+      tienda_nombre: tiendaNombre,
+      tienda_url: tiendaUrl,
+      vercel_deploy_hook: vercelDeployHook || '',
+      conectado: false,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+  }
+
+  // Log
+  await logActividad(userId, email, 'nuevo_registro', `tipo: ${tipoCuenta}`, ip);
+
+  // Auto-login
+  const { data: loginData, error: loginError } = await adminSupabase.auth.signInWithPassword({ email, password });
+  if (loginError) return json(res, 201, { ok: true, message: 'Cuenta creada. Iniciá sesión.' });
+
+  return json(res, 201, {
+    ok: true,
+    token: loginData.session.access_token,
+    user: { id: userId, email, rol: 'usuario', nombre, tipoCuenta, tiendaConfigurada: !!tiendaConfigurada }
+  });
+}
+
+// ── ACTIVIDAD LOG ─────────────────────────────────────────────────────────────
+async function logActividad(userId, email, accion, detalle = '', ip = '') {
+  try {
+    await adminSupabase.from('logs_actividad').insert({ user_id: userId || null, accion, detalle: `${email ? email+' — ' : ''}${detalle}`, ip });
+  } catch {}
+}
+
+// ── ADMIN HANDLERS ────────────────────────────────────────────────────────────
+async function handleAdminStats(req, res) {
+  const now = new Date();
+  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const [
+    { count: totalUsuarios },
+    { data: ventasMes },
+    { data: ventasOnlineMes },
+    { count: cuentasConTienda },
+    { count: mpConectados },
+    { data: actividadReciente }
+  ] = await Promise.all([
+    adminSupabase.from('perfiles').select('*', { count: 'exact', head: true }).eq('rol', 'usuario'),
+    adminSupabase.from('ventas').select('precio_venta').gte('created_at', inicioMes),
+    adminSupabase.from('ventas_online').select('monto').gte('created_at', inicioMes),
+    adminSupabase.from('perfiles').select('*', { count: 'exact', head: true }).eq('tipo_cuenta', 'gestion_tienda'),
+    adminSupabase.from('mp_conexiones').select('*', { count: 'exact', head: true }).eq('conectado', true),
+    adminSupabase.from('logs_actividad').select('accion, detalle, created_at').order('created_at', { ascending: false }).limit(20),
+  ]);
+
+  const facturadoMes = (ventasMes || []).reduce((s, v) => s + (parseFloat(v.precio_venta) || 0), 0);
+  const ventasOnlineMesTotal = (ventasOnlineMes || []).reduce((s, v) => s + (parseFloat(v.monto) || 0), 0);
+
+  // Usuarios activos este mes (con ventas o actividad)
+  const { data: activosMesData } = await adminSupabase
+    .from('logs_actividad').select('user_id').gte('created_at', inicioMes).not('user_id', 'is', null);
+  const activosMes = new Set((activosMesData || []).map(a => a.user_id)).size;
+
+  return json(res, 200, {
+    totalUsuarios: totalUsuarios || 0, activosMes,
+    facturadoMes, ventasOnlineMes: ventasOnlineMesTotal,
+    cuentasConTienda: cuentasConTienda || 0, mpConectados: mpConectados || 0,
+    actividadReciente: actividadReciente || []
+  });
+}
+
+async function handleAdminGetUsuarios(req, res) {
+  const { data: perfiles } = await adminSupabase.from('perfiles').select('*').order('created_at', { ascending: false });
+  const { data: authUsers } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
+  const { data: mpData } = await adminSupabase.from('mp_conexiones').select('user_id, conectado');
+
+  const mpMap = {};
+  (mpData || []).forEach(m => { mpMap[m.user_id] = m.conectado; });
+  const authMap = {};
+  (authUsers?.users || []).forEach(u => { authMap[u.id] = u; });
+
+  const result = (perfiles || []).map(p => ({
+    id: p.id,
+    nombre: p.nombre,
+    email: authMap[p.id]?.email || '',
+    rol: p.rol,
+    activo: p.activo,
+    tipoCuenta: p.tipo_cuenta,
+    tiendaConfigurada: p.tienda_configurada,
+    mpConectado: !!mpMap[p.id],
+    ultimoAcceso: authMap[p.id]?.last_sign_in_at || null,
+  }));
+
+  return json(res, 200, result);
+}
+
+async function handleAdminPutUsuario(req, res, id) {
+  const body = await parseBody(req);
+  const updates = {};
+  if (body.nombre      !== undefined) updates.nombre       = body.nombre;
+  if (body.tipoCuenta  !== undefined) updates.tipo_cuenta  = body.tipoCuenta;
+  if (body.activo      !== undefined) updates.activo       = !!body.activo;
+  const { error } = await adminSupabase.from('perfiles').update(updates).eq('id', id);
+  if (error) return json(res, 500, { error: error.message });
+  return json(res, 200, { ok: true });
+}
+
+async function handleAdminToggleUsuario(req, res, id, activar) {
+  const { error } = await adminSupabase.from('perfiles').update({ activo: activar }).eq('id', id);
+  if (error) return json(res, 500, { error: error.message });
+  await logActividad(null, 'admin', activar ? 'usuario_activado' : 'usuario_desactivado', `user_id: ${id}`);
+  return json(res, 200, { ok: true });
+}
+
+async function handleAdminResetPassword(req, res, id) {
+  const { data: authUser } = await adminSupabase.auth.admin.getUserById(id);
+  if (!authUser?.user?.email) return json(res, 404, { error: 'Usuario no encontrado' });
+  const { error } = await adminSupabase.auth.resetPasswordForEmail(authUser.user.email);
+  if (error) return json(res, 500, { error: error.message });
+  await logActividad(null, 'admin', 'reset_password_enviado', `email: ${authUser.user.email}`);
+  return json(res, 200, { ok: true });
+}
+
+async function handleAdminCrearUsuario(req, res) {
+  const body = await parseBody(req);
+  const { nombre, email, password, tipoCuenta } = body;
+  if (!nombre || !email || !password) return json(res, 400, { error: 'Faltan campos requeridos' });
+
+  const { data: authData, error } = await adminSupabase.auth.admin.createUser({
+    email, password, email_confirm: true, user_metadata: { nombre }
+  });
+  if (error) return json(res, 500, { error: error.message });
+
+  await adminSupabase.from('perfiles').insert({
+    id: authData.user.id, nombre, rol: 'usuario', activo: true,
+    tipo_cuenta: tipoCuenta || 'gestion', tienda_configurada: false
+  });
+  await logActividad(null, 'admin', 'usuario_creado_por_admin', `email: ${email}`);
+  return json(res, 201, { ok: true, id: authData.user.id });
+}
+
+async function handleAdminVentasGlobales(req, res) {
+  const { data, error } = await adminSupabase
+    .from('ventas_online')
+    .select('*, perfiles!inner(nombre)')
+    .order('created_at', { ascending: false })
+    .limit(500);
+  if (error) return json(res, 500, { error: error.message });
+  const result = (data || []).map(v => ({
+    ...v,
+    cuenta: v.perfiles?.nombre || '—',
+    comprador: (v.items?.[0]?.nombre || '').slice(0, 30),
+    monto: (v.items || []).reduce((s, i) => s + (i.precio * i.cantidad), 0),
+  }));
+  return json(res, 200, result);
+}
+
+async function handleAdminActividad(req, res) {
+  const { data: logs } = await adminSupabase
+    .from('logs_actividad')
+    .select('*, perfiles(nombre)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  return json(res, 200, (logs || []).map(l => ({
+    ...l, email: l.detalle?.split(' — ')?.[0] || l.perfiles?.nombre || '—'
+  })));
+}
+
+async function handleAdminGetConfig(req, res) {
+  const { data } = await adminSupabase.from('config_sistema').select('clave, valor');
+  const cfg = {};
+  (data || []).forEach(r => { cfg[r.clave] = r.valor; });
+  return json(res, 200, cfg);
+}
+
+async function handleAdminPostConfig(req, res) {
+  const body = await parseBody(req);
+  const updates = Object.entries(body).map(([clave, valor]) => ({ clave, valor: String(valor), updated_at: new Date().toISOString() }));
+  for (const row of updates) {
+    await adminSupabase.from('config_sistema').upsert(row, { onConflict: 'clave' });
+  }
+  await logActividad(null, 'admin', 'config_sistema_actualizada', Object.keys(body).join(', '));
+  return json(res, 200, { ok: true });
 }
 
 // ── SHIPPING QUOTE ────────────────────────────────────────────────────────────

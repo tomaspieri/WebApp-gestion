@@ -3,191 +3,241 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestión de Ventas</title>
+<title>CHANA Gestión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+:root{
+  --bg:#0F0F0F;--surface:#1A1A1A;--surface-2:#222222;
+  --border:#2E2E2E;--border-focus:#444444;
+  --text:#EDEDED;--text-2:#888888;--text-3:#555555;
+  --accent:#A88671;--accent-hover:#8C6F5A;
+  --success:#3A7D44;--warning:#8A6500;--danger:#8B2020;
+  --admin:#1E3A5F;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f5f6fa;color:#2d3436;display:flex;min-height:100vh}
-.sidebar{width:230px;background:linear-gradient(180deg,#2c3e50,#34495e);color:#fff;display:flex;flex-direction:column;position:fixed;height:100vh;left:0;top:0;z-index:100;transition:transform .3s}
-.sidebar-logo{padding:20px;border-bottom:1px solid rgba(255,255,255,.1);font-size:16px;font-weight:700}
-.sidebar-logo span{display:block;font-size:11px;font-weight:400;opacity:.6;margin-top:2px}
-.sidebar nav{padding:10px 0;flex:1}
-.nav-item{display:flex;align-items:center;gap:10px;padding:12px 20px;cursor:pointer;transition:background .2s;font-size:13px;border-left:3px solid transparent}
-.nav-item:hover{background:rgba(255,255,255,.1)}
-.nav-item.active{background:rgba(255,255,255,.15);border-left-color:#3498db}
-.sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:10px;opacity:.4}
-.main{margin-left:230px;flex:1;padding:22px;min-height:100vh}
-/* Sidebar overlay (mobile) */
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;line-height:1.5}
+/* ── SIDEBAR ── */
+.sidebar{width:220px;background:#111;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;left:0;top:0;z-index:100}
+.sidebar.admin-sidebar{border-top:2px solid var(--admin)}
+.sidebar-logo{padding:14px 16px 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text)}
+.sidebar-logo span{display:block;font-size:11px;font-weight:400;color:var(--text-3);margin-top:2px}
+.sidebar nav{padding:6px 0;flex:1;overflow-y:auto}
+.nav-section-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:10px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:13px;color:var(--text-2);border-radius:5px;margin:1px 8px;transition:background .1s,color .1s}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--text)}
+.sidebar-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3)}
+/* ── MAIN ── */
+.main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.main-content{padding:24px;flex:1}
+/* ── SIDEBAR OVERLAY ── */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
 .sidebar-overlay.open{display:block}
-/* Hamburger - only desktop fallback */
-.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:#2c3e50;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer}
-/* Mobile bottom nav */
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(0deg,#263240,#2c3e50);z-index:200;box-shadow:0 -2px 12px rgba(0,0,0,.35)}
+.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:18px;cursor:pointer}
+/* ── MOBILE NAV ── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid var(--border);z-index:200}
 .mob-nav-inner{display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
-.mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:rgba(255,255,255,.5);font-size:8.5px;font-weight:600;cursor:pointer;padding:7px 2px 6px;border:none;background:none;font-family:inherit;transition:color .2s;letter-spacing:.1px;min-width:0}
-.mob-nav-item.active{color:#3498db}
-.mob-nav-icon{font-size:19px;line-height:1.15}
-/* Layout */
+.mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-3);font-size:9px;font-weight:500;cursor:pointer;padding:7px 2px 6px;border:none;background:none;font-family:inherit;transition:color .15s;min-width:0}
+.mob-nav-item.active{color:var(--accent)}
+.mob-nav-icon{font-size:18px;line-height:1.2}
+/* ── LAYOUT ── */
 .page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px}
-.page-title{font-size:21px;font-weight:700}
-.page-subtitle{font-size:13px;color:#636e72;margin-top:3px}
-.btn{padding:9px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:#3498db;color:#fff}.btn-primary:hover{background:#2980b9}
-.btn-success{background:#00b894;color:#fff}.btn-success:hover{background:#00a381}
-.btn-danger{background:#e17055;color:#fff}.btn-danger:hover{background:#c0392b}
-.btn-secondary{background:#dfe6e9;color:#2d3436}.btn-secondary:hover{background:#b2bec3}
-.btn-warning{background:#fdcb6e;color:#2d3436}.btn-warning:hover{background:#e17055;color:#fff}
-.btn-sm{padding:4px 9px;font-size:12px}
-.card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.page-title{font-size:18px;font-weight:500;color:var(--text)}
+.page-subtitle{font-size:13px;color:var(--text-2);margin-top:3px}
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s,border-color .15s;display:inline-flex;align-items:center;gap:6px;font-family:inherit;line-height:1}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-hover)}
+.btn-success{background:var(--success);color:#fff;border:none}.btn-success:hover{background:#2d6636}
+.btn-danger{background:transparent;color:#c05050;border:1px solid rgba(192,57,43,.3);padding:7px 16px}.btn-danger:hover{background:rgba(192,57,43,.08)}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);padding:7px 16px}.btn-secondary:hover{border-color:var(--border-focus);background:var(--surface-2)}
+.btn-warning{background:var(--warning);color:#fff;border:none}.btn-warning:hover{background:#6e5100}
+.btn-sm{padding:4px 10px;font-size:12px}
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.stat-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.stat-label{font-size:11px;color:#636e72;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.stat-value{font-size:24px;font-weight:700}
-.stat-value.green{color:#00b894}.stat-value.red{color:#e17055}.stat-value.blue{color:#3498db}.stat-value.orange{color:#e67e22}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px}
+.stat-label{font-size:12px;color:var(--text-2);margin-bottom:6px}
+.stat-value{font-size:24px;font-weight:600;color:var(--text)}
+.stat-value.green{color:#5CB870}.stat-value.red{color:#c05050}.stat-value.blue{color:#5B9ED6}.stat-value.orange{color:#C4861C}
+/* ── TABLES ── */
 .table-container{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#f8f9fa;padding:10px 12px;text-align:left;font-weight:600;color:#636e72;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #e9ecef}
-td{padding:10px 12px;border-bottom:1px solid #f1f3f4;vertical-align:middle}
+th{padding:10px 16px;text-align:left;font-weight:400;color:var(--text-2);font-size:11px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+td{padding:10px 16px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:#fafbfc}
-tfoot tr td{font-weight:700;background:#f8f9fa;border-top:2px solid #e9ecef}
-.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
-.badge-green{background:#d4efdf;color:#1e8449}.badge-red{background:#fadbd8;color:#c0392b}
-.badge-orange{background:#fef3cd;color:#d68910}.badge-blue{background:#d6eaf8;color:#1a5276}
-.badge-purple{background:#e8daef;color:#6c3483}
-.client-list{display:grid;gap:9px}
-.client-card{background:#fff;border-radius:12px;padding:13px 17px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .2s;border:2px solid transparent}
-.client-card:hover{border-color:#3498db;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
-.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0}
-.client-name{font-weight:600;font-size:14px}
-.client-meta{font-size:12px;color:#636e72;margin-top:2px}
-.client-deuda{font-weight:700;font-size:14px}
-.client-deuda.zero{color:#00b894}.client-deuda.pos{color:#e17055}
+tbody tr:hover td{background:var(--surface-2)}
+tfoot tr td{font-weight:600;color:var(--text);border-top:1px solid var(--border)}
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.badge-green{background:rgba(58,125,68,.15);color:#5CB870}
+.badge-red{background:rgba(139,32,32,.15);color:#c05050}
+.badge-orange{background:rgba(138,101,0,.15);color:#C4861C}
+.badge-blue{background:rgba(30,58,95,.25);color:#7EB3FF}
+.badge-purple{background:rgba(100,60,140,.2);color:#a78cc8}
+/* ── CLIENT CARDS ── */
+.client-list{display:grid;gap:8px}
+.client-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s}
+.client-card:hover{border-color:var(--border-focus)}
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;flex-shrink:0;background:var(--accent)}
+.client-name{font-weight:500;font-size:14px;color:var(--text)}
+.client-meta{font-size:12px;color:var(--text-2);margin-top:2px}
+.client-deuda{font-weight:600;font-size:14px}
+.client-deuda.zero{color:var(--text-2)}.client-deuda.pos{color:#c05050}
+/* ── SEARCH ── */
 .search-box{position:relative;margin-bottom:16px}
-.search-box input{width:100%;padding:10px 12px 10px 40px;border:2px solid #e9ecef;border-radius:10px;font-size:13px;outline:none;transition:border-color .2s}
-.search-box input:focus{border-color:#3498db}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#b2bec3;font-size:16px}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.search-box input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:var(--surface-2);outline:none;transition:border-color .15s;font-family:inherit}
+.search-box input:focus{border-color:var(--border-focus)}
+.search-box input::placeholder{color:var(--text-3)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:14px}
+/* ── MODALS ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:14px;padding:26px;width:500px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:18px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;width:500px;max-width:95vw;max-height:92vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:18px}
+/* ── FORMS ── */
 .form-group{margin-bottom:13px}
-.form-label{display:block;font-size:11px;font-weight:600;color:#636e72;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
-.form-input{width:100%;padding:8px 11px;border:2px solid #e9ecef;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s;font-family:inherit}
-.form-input:focus{border-color:#3498db}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text-2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.form-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:var(--surface-2);outline:none;transition:border-color .15s;font-family:inherit}
+.form-input:focus{border-color:var(--border-focus)}
+.form-input::placeholder{color:var(--text-3)}
+.form-input option{background:var(--surface-2);color:var(--text)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
-.calc-display{background:#f8f9fa;border:2px solid #e9ecef;border-radius:8px;padding:8px 11px;font-size:14px;font-weight:700;color:#2d3436}
-.calc-display.red{background:#fff5f5;border-color:#fed7d7;color:#c0392b}
-.calc-display.green{background:#f0fff4;border-color:#c6f6d5;color:#00b894}
+/* ── MISC ── */
+.calc-display{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;font-weight:600;color:var(--text)}
+.calc-display.red{border-color:rgba(139,32,32,.4);color:#c05050}
+.calc-display.green{border-color:rgba(58,125,68,.4);color:#5CB870}
 .month-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
-.month-tab{padding:6px 12px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;border:2px solid #e9ecef;background:#fff;transition:all .2s}
-.month-tab:hover{border-color:#3498db;color:#3498db}
-.month-tab.active{background:#3498db;border-color:#3498db;color:#fff}
-.empty-state{text-align:center;padding:45px 20px;color:#b2bec3}
-.empty-state-icon{font-size:50px;margin-bottom:12px}
-.empty-state-text{font-size:14px;color:#636e72;margin-bottom:6px}
-.back-btn{display:inline-flex;align-items:center;gap:7px;color:#636e72;cursor:pointer;font-size:13px;margin-bottom:12px}
-.back-btn:hover{color:#3498db}
-.amt-pos{color:#00b894;font-weight:600}.amt-neg{color:#e17055;font-weight:600}
-.lnk{color:#3498db;cursor:pointer}
-.year-selector{display:flex;align-items:center;gap:9px}
-.year-btn{background:#fff;border:2px solid #e9ecef;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;transition:all .2s}
-.year-btn:hover{border-color:#3498db}
-.year-display{font-size:17px;font-weight:700;min-width:52px;text-align:center}
-.alert-box{border-radius:10px;padding:13px;margin-bottom:14px}
-.alert-box.red{background:#fff5f5;border:2px solid #fed7d7}
-.img-thumb-wrap{position:relative;width:76px;height:76px;flex-shrink:0}
-.img-thumb-wrap img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:2px solid #e9ecef;display:block}
-.img-thumb-remove{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:#e17055;color:#fff;border:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.img-thumb-badge{position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;pointer-events:none}
-.img-thumb-badge.new{left:auto;right:3px;background:rgba(52,152,219,.85)}
-.img-upload-label{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:#f8f9fa;border:2px dashed #e9ecef;border-radius:8px;cursor:pointer;font-size:12px;color:#636e72;transition:border-color .2s,color .2s;font-weight:600}
-.img-upload-label:hover{border-color:#3498db;color:#3498db}
-.alert-box.yellow{background:#fffbf0;border:2px solid #fde68a}
-.alert-title{font-weight:700;font-size:13px;margin-bottom:7px}
-.alert-title.red{color:#c0392b}.alert-title.yellow{color:#d68910}
-.alert-item{font-size:12px;color:#636e72;padding:3px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
-.spinner{display:inline-block;width:18px;height:18px;border:3px solid #e9ecef;border-top-color:#3498db;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+.month-tab{padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--text-2);transition:all .15s}
+.month-tab:hover{border-color:var(--border-focus);color:var(--text);background:var(--surface-2)}
+.month-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty-state{text-align:center;padding:45px 20px;color:var(--text-3)}
+.empty-state-icon{font-size:36px;margin-bottom:10px;opacity:.5}
+.empty-state-text{font-size:13px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);cursor:pointer;font-size:13px;margin-bottom:12px}
+.back-btn:hover{color:var(--text)}
+.amt-pos{color:#5CB870;font-weight:500}.amt-neg{color:#c05050;font-weight:500}
+.lnk{color:var(--accent);cursor:pointer}.lnk:hover{color:var(--accent-hover)}
+.year-selector{display:flex;align-items:center;gap:8px}
+.year-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:14px;color:var(--text);transition:all .15s}
+.year-btn:hover{border-color:var(--border-focus);background:var(--surface-2)}
+.year-display{font-size:15px;font-weight:500;min-width:52px;text-align:center;color:var(--text)}
+.alert-box{border-radius:6px;padding:12px 14px;margin-bottom:14px;border:1px solid}
+.alert-box.red{background:rgba(139,32,32,.1);border-color:rgba(139,32,32,.3)}
+.alert-box.yellow{background:rgba(138,101,0,.1);border-color:rgba(138,101,0,.3)}
+.alert-title{font-weight:500;font-size:13px;margin-bottom:6px}
+.alert-title.red{color:#c05050}.alert-title.yellow{color:#C4861C}
+.alert-item{font-size:12px;color:var(--text-2);padding:3px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--text-3);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-page{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:#636e72;font-size:15px}
-.info-box{background:#eaf4ff;border:2px solid #b3d9ff;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a5276;line-height:1.6}
-/* ── AUTH ───────────────────────────────────────────────────────────────────── */
-.auth-overlay{display:none;position:fixed;inset:0;background:#1a1f2e;z-index:9999;align-items:center;justify-content:center}
+.loading-page{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text-2);font-size:14px}
+.info-box{background:rgba(30,58,95,.15);border:1px solid rgba(30,58,95,.3);border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--text-2);line-height:1.6}
+.info-box strong{display:block;margin-bottom:4px;color:var(--text)}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.row-income td{background:rgba(58,125,68,.05)}
+.row-expense td{background:rgba(139,32,32,.05)}
+.row-total td{background:var(--surface-2);font-weight:600}
+/* ── IMAGES ── */
+.img-thumb-wrap{position:relative;width:76px;height:76px;flex-shrink:0}
+.img-thumb-wrap img{width:76px;height:76px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block}
+.img-thumb-remove{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0}
+.img-thumb-badge{position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;pointer-events:none}
+.img-thumb-badge.new{left:auto;right:3px;background:rgba(168,134,113,.8)}
+.img-upload-label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:transparent;border:1px dashed var(--border);border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-2);transition:border-color .15s,color .15s;font-weight:500}
+.img-upload-label:hover{border-color:var(--accent);color:var(--accent)}
+.mp-connect-panel{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-top:4px}
+.mp-connect-panel.connected{border-color:rgba(58,125,68,.4)}
+/* ── AUTH ── */
+.auth-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center}
 .auth-overlay.open{display:flex}
-.auth-loading{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.6);font-size:15px}
-body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body.app-hidden #app-main,body.app-hidden .sidebar-overlay{display:none!important}
-.auth-box{background:#fff;border-radius:16px;padding:36px;width:380px;max-width:95vw;box-shadow:0 24px 80px rgba(0,0,0,.3)}
-.auth-logo{text-align:center;font-size:26px;font-weight:800;margin-bottom:4px;color:#2c3e50}
-.auth-subtitle{text-align:center;font-size:13px;color:#636e72;margin-bottom:28px}
-.auth-error{background:#fff5f5;border:2px solid #fed7d7;color:#c0392b;padding:10px 13px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
-.user-badge{display:flex;align-items:center;gap:7px;padding:8px 12px;background:rgba(255,255,255,.08);border-radius:8px;margin:10px 14px 0}
-.user-badge-name{font-size:12px;font-weight:600;color:#fff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.user-badge-role{font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700;flex-shrink:0}
-.user-badge-role.admin{background:#e74c3c;color:#fff}
-.user-badge-role.usuario{background:#3498db;color:#fff}
-.btn-logout{width:100%;margin-top:6px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:background .2s}
-.btn-logout:hover{background:rgba(255,255,255,.15);color:#fff}
-.mp-connect-panel{background:#f8f9fa;border:2px solid #e9ecef;border-radius:10px;padding:14px;margin-top:4px}
-.mp-connect-panel.connected{background:#f0fff4;border-color:#c6f6d5}
-.info-box strong{display:block;margin-bottom:4px}
-.divider{border:none;border-top:2px solid #f1f3f4;margin:18px 0}
-.row-income td{background:#f0fff4}
-.row-expense td{background:#fff5f5}
-.row-total td{background:#f8f9fa;font-weight:700;font-size:14px}
+.auth-loading{display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:14px}
+body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body.app-hidden #app-main,body.app-hidden .sidebar-overlay,body.app-hidden #store-banner,body.app-hidden #impersonate-bar{display:none!important}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:32px;width:440px;max-width:95vw}
+.auth-logo{text-align:center;font-size:18px;font-weight:600;margin-bottom:4px;color:var(--text);letter-spacing:.02em}
+.auth-subtitle{text-align:center;font-size:13px;color:var(--text-2);margin-bottom:22px}
+.auth-error{background:rgba(139,32,32,.1);border:1px solid rgba(139,32,32,.3);color:#c05050;padding:10px 13px;border-radius:6px;font-size:13px;margin-bottom:14px;display:none}
+.auth-link{font-size:13px;color:var(--text-2);text-align:center;margin-top:14px}
+.auth-link a{color:var(--accent);cursor:pointer;text-decoration:none}
+.auth-link a:hover{color:var(--accent-hover)}
+/* ── USER BADGE ── */
+.user-badge{display:flex;align-items:center;gap:7px;padding:8px 12px;border-top:1px solid var(--border)}
+.user-badge-name{font-size:12px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-badge-role{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;flex-shrink:0}
+.user-badge-role.admin{background:var(--admin);color:#7EB3FF}
+.user-badge-role.usuario{background:rgba(80,80,80,.15);color:var(--text-2)}
+.btn-logout{width:100%;background:transparent;color:var(--text-2);border:none;padding:8px 12px;cursor:pointer;font-size:12px;font-family:inherit;transition:color .15s;text-align:left}
+.btn-logout:hover{color:var(--text)}
+.admin-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--admin);color:#7EB3FF;margin-left:6px;vertical-align:middle}
+/* ── BANNERS ── */
+#store-banner{background:rgba(168,134,113,.08);border-bottom:1px solid rgba(168,134,113,.2);color:var(--text-2);font-size:13px;padding:10px 24px;display:none;align-items:center;gap:12px}
+#store-banner a{color:var(--accent);cursor:pointer;text-decoration:none}
+#store-banner a:hover{color:var(--accent-hover)}
+#impersonate-bar{background:rgba(30,58,95,.15);border-bottom:1px solid rgba(30,58,95,.3);color:var(--text-2);font-size:13px;padding:8px 24px;display:none;align-items:center;gap:12px}
+#impersonate-bar a{color:#7EB3FF;cursor:pointer;text-decoration:none}
+/* ── REGISTRATION ── */
+.reg-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.reg-type-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:16px;cursor:pointer;transition:border-color .15s}
+.reg-type-card:hover{border-color:var(--border-focus)}
+.reg-type-card.selected{border-color:var(--accent);background:rgba(168,134,113,.08)}
+.reg-type-card h4{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
+.reg-type-card p{font-size:12px;color:var(--text-2);line-height:1.5}
+.reg-section-sep{display:flex;align-items:center;gap:10px;margin:16px 0}
+.reg-section-sep::before,.reg-section-sep::after{content:'';flex:1;border-top:1px solid var(--border)}
+.reg-section-sep span{font-size:11px;color:var(--text-3)}
 
-/* ── RESPONSIVE TABLES (card mode on mobile) ────────────────────────── */
+/* ── RESPONSIVE TABLES ── */
 @media(max-width:600px){
   .table-responsive thead{display:none}
-  .table-responsive .tfoot-mobile{display:none}
   .table-container{overflow-x:unset}
-  .table-responsive tbody tr{display:block;margin-bottom:10px;background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-bottom:none}
+  .table-responsive tbody tr{display:block;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
   .table-responsive tbody tr:hover td{background:transparent}
-  .table-responsive tbody td{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f3f4;font-size:13px;gap:8px}
+  .table-responsive tbody td{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;gap:8px}
   .table-responsive tbody td:last-child{border-bottom:none;padding-top:8px;justify-content:flex-end}
-  .table-responsive tbody td[data-label]::before{content:attr(data-label);font-weight:700;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0}
+  .table-responsive tbody td[data-label]::before{content:attr(data-label);font-weight:500;font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0}
   .table-responsive tfoot{display:none}
 }
-
-/* ── MOBILE LAYOUT ──────────────────────────────────────────────────── */
 @media(max-width:700px){
   .sidebar{display:none!important}
   .menu-btn{display:none!important}
-  .main{margin-left:0;padding:14px 12px 74px}
+  .main{margin-left:0}
+  .main-content{padding:14px 12px 74px}
   .mob-nav{display:block}
-  .page-title{font-size:18px}
+  .page-title{font-size:16px}
   .stat-value{font-size:20px}
   .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
   .form-row-3{grid-template-columns:1fr 1fr}
-  .modal{padding:16px;border-radius:12px}
+  .modal{padding:16px;border-radius:8px}
   .modal-overlay.open{align-items:flex-end}
   .modal{border-bottom-left-radius:0;border-bottom-right-radius:0;max-width:100vw;width:100%}
-  .page-header{gap:8px}
-  .btn{padding:8px 13px;font-size:13px}
+  .btn{padding:8px 12px;font-size:12px}
   table{font-size:12px}
-  th,td{padding:8px 8px}
-  .card{padding:14px}
+  th,td{padding:8px 10px}
+  .card{padding:14px 16px}
+  #store-banner,#impersonate-bar{flex-wrap:wrap}
 }
 @media(max-width:400px){
   .form-row,.form-row-3{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:1fr 1fr}
+  .reg-type-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body class="app-hidden">
 
-<!-- Pantalla de login / carga — ocupa toda la pantalla -->
+<!-- Auth overlay -->
 <div class="auth-overlay open" id="auth-overlay">
-  <!-- Estado: cargando -->
   <div class="auth-loading" id="auth-loading">
-    <span class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:#3498db;width:22px;height:22px;border-width:3px"></span>
+    <span class="spinner"></span>
     Cargando...
   </div>
-  <!-- Estado: formulario de login -->
+
+  <!-- LOGIN -->
   <div id="auth-form-wrapper" style="display:none">
     <div class="auth-box">
-      <div class="auth-logo">👗 CHANA Gestión</div>
+      <div class="auth-logo">CHANA Gestión</div>
       <p class="auth-subtitle">Ingresá con tu cuenta para continuar</p>
       <div class="auth-error" id="auth-error"></div>
       <form id="auth-form" onsubmit="doLogin(event)">
@@ -201,6 +251,102 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         </div>
         <button type="submit" class="btn btn-primary" id="auth-btn" style="width:100%;justify-content:center;margin-top:6px">Ingresar</button>
       </form>
+      <div class="auth-link">¿Primera vez? <a onclick="showRegStep1()">Crear cuenta</a></div>
+    </div>
+  </div>
+
+  <!-- REGISTRO PASO 1: Elegir tipo de cuenta -->
+  <div id="reg-step1-wrapper" style="display:none">
+    <div class="auth-box" style="width:520px">
+      <div class="auth-logo">Crear cuenta</div>
+      <p class="auth-subtitle">Elegí el tipo de cuenta que mejor se adapta a tu negocio</p>
+      <div class="reg-type-grid">
+        <div class="reg-type-card" id="reg-card-gestion" onclick="selectRegType('gestion')">
+          <h4>Solo Gestión</h4>
+          <p>Clientes, ventas, gastos y stock.<br>Sin tienda online.</p>
+        </div>
+        <div class="reg-type-card" id="reg-card-gestion_tienda" onclick="selectRegType('gestion_tienda')">
+          <h4>Gestión + Tienda</h4>
+          <p>Todo lo anterior más tu tienda online vinculada.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="reg-step1-btn" onclick="showRegStep2()" disabled style="width:100%;justify-content:center">Continuar</button>
+      <div class="auth-link">¿Ya tenés cuenta? <a onclick="showLogin()">Ingresar</a></div>
+    </div>
+  </div>
+
+  <!-- REGISTRO PASO 2A: Solo Gestión -->
+  <div id="reg-step2-gestion-wrapper" style="display:none">
+    <div class="auth-box">
+      <div class="auth-logo">Crear cuenta</div>
+      <p class="auth-subtitle">Solo Gestión</p>
+      <div class="auth-error" id="reg-error-gestion"></div>
+      <form onsubmit="doRegistro(event,'gestion')">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" class="form-input" id="reg-nombre-g" required placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="reg-email-g" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="reg-pass-g" required minlength="8" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <input type="password" class="form-input" id="reg-pass2-g" required placeholder="Repetí la contraseña">
+        </div>
+        <button type="submit" class="btn btn-primary" id="reg-btn-g" style="width:100%;justify-content:center;margin-top:6px">Crear cuenta</button>
+      </form>
+      <div class="auth-link"><a onclick="showRegStep1()">← Volver</a></div>
+    </div>
+  </div>
+
+  <!-- REGISTRO PASO 2B: Gestión + Tienda -->
+  <div id="reg-step2-tienda-wrapper" style="display:none">
+    <div class="auth-box" style="width:500px;max-height:90vh;overflow-y:auto">
+      <div class="auth-logo">Crear cuenta</div>
+      <p class="auth-subtitle">Gestión + Tienda Online</p>
+      <div class="auth-error" id="reg-error-tienda"></div>
+      <form onsubmit="doRegistro(event,'gestion_tienda')">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" class="form-input" id="reg-nombre-t" required placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="reg-email-t" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="reg-pass-t" required minlength="8" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <input type="password" class="form-input" id="reg-pass2-t" required placeholder="Repetí la contraseña">
+        </div>
+        <div class="reg-section-sep"><span>Tu tienda online</span></div>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:12px">Podés completar esto ahora o después desde Configuración.</p>
+        <div class="form-group">
+          <label class="form-label">Nombre de la tienda</label>
+          <input type="text" class="form-input" id="reg-tienda-nombre" placeholder="Ej: Chana Indumentaria">
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL de la tienda</label>
+          <input type="url" class="form-input" id="reg-tienda-url" placeholder="https://mi-tienda.vercel.app">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vercel Deploy Hook URL <a href="#" onclick="return false" style="font-size:11px;color:var(--accent);text-transform:none;letter-spacing:0">¿Cómo obtenerlo?</a></label>
+          <input type="url" class="form-input" id="reg-deploy-hook" placeholder="https://api.vercel.com/v1/integrations/deploy/...">
+        </div>
+        <button type="submit" class="btn btn-primary" id="reg-btn-t" style="width:100%;justify-content:center;margin-top:6px">Crear cuenta y configurar tienda</button>
+        <div class="auth-link" style="margin-top:10px">
+          <a onclick="doRegistro(null,'gestion_tienda',true)">Configurar más adelante →</a>
+        </div>
+      </form>
+      <div class="auth-link" style="margin-top:6px"><a onclick="showRegStep1()">← Volver</a></div>
     </div>
   </div>
 </div>
@@ -208,22 +354,14 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()">☰</button>
 
+<!-- Sidebar (renderizado por JS según rol) -->
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-logo">👗 Mi Emprendimiento<span>Gestión de Ventas</span></div>
-  <nav id="sidebar-nav">
-    <div class="nav-item active" data-page="dashboard"   onclick="showPage('dashboard')">📊 Dashboard</div>
-    <div class="nav-item" data-page="clientes"           onclick="showPage('clientes')">👥 Clientes</div>
-    <div class="nav-item" data-page="ventas"             onclick="showPage('ventas')">🛍️ Todas las Ventas</div>
-    <div class="nav-item" data-page="meses"              onclick="showPage('meses')">📅 Balance Mensual</div>
-    <div class="nav-item" data-page="deudas"             onclick="showPage('deudas')">💰 Deudas</div>
-    <div class="nav-item" data-page="gastos"             onclick="showPage('gastos')">💸 Gastos</div>
-    <div class="nav-item" data-page="stock"               onclick="showPage('stock')">📦 Stock</div>
-    <div class="nav-item" data-page="resultados"         onclick="showPage('resultados')">📈 Resultados</div>
-    <div class="nav-item" data-page="config"             onclick="showPage('config')">⚙️ Configuración</div>
-  </nav>
-  <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,.1)">
-    <button id="btn-ocultar" onclick="toggleOcultar()" style="width:100%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;transition:background .2s">
-      👁️ Ocultar valores
+  <div class="sidebar-logo" id="sidebar-logo">CHANA<span>Gestión de Ventas</span></div>
+  <nav id="sidebar-nav"></nav>
+  <div style="padding:8px 16px;border-top:1px solid var(--border)">
+    <button id="btn-ocultar" onclick="toggleOcultar()" style="width:100%;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;transition:all .15s">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Ocultar valores
     </button>
   </div>
   <div id="user-badge-container" style="display:none">
@@ -231,34 +369,39 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       <span class="user-badge-name" id="user-badge-name">Usuario</span>
       <span class="user-badge-role usuario" id="user-badge-role">usuario</span>
     </div>
-    <div style="padding:0 14px">
-      <button class="btn-logout" onclick="doLogout()">🚪 Cerrar sesión</button>
-    </div>
+    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
   </div>
-  <div class="sidebar-footer" style="margin-top:8px">CHANA Gestión</div>
+  <div class="sidebar-footer">CHANA Gestión v2</div>
 </div>
 
-<!-- Mobile bottom nav -->
+<!-- Mobile bottom nav (renderizado por JS) -->
 <nav class="mob-nav" id="mob-nav">
-  <div class="mob-nav-inner">
-    <button class="mob-nav-item active" data-page="dashboard"  onclick="showPage('dashboard')"><span class="mob-nav-icon">📊</span>Inicio</button>
-    <button class="mob-nav-item" data-page="clientes"          onclick="showPage('clientes')"><span class="mob-nav-icon">👥</span>Clientes</button>
-    <button class="mob-nav-item" data-page="deudas"            onclick="showPage('deudas')"><span class="mob-nav-icon">💰</span>Deudas</button>
-    <button class="mob-nav-item" data-page="ventas"            onclick="showPage('ventas')"><span class="mob-nav-icon">🛍️</span>Ventas</button>
-    <button class="mob-nav-item" data-page="gastos"            onclick="showPage('gastos')"><span class="mob-nav-icon">💸</span>Gastos</button>
-    <button class="mob-nav-item" data-page="meses"             onclick="showPage('meses')"><span class="mob-nav-icon">📅</span>Balance</button>
-    <button class="mob-nav-item" data-page="stock"             onclick="showPage('stock')"><span class="mob-nav-icon">📦</span>Stock</button>
-    <button class="mob-nav-item" data-page="resultados"        onclick="showPage('resultados')"><span class="mob-nav-icon">📈</span>Result.</button>
-    <button class="mob-nav-item" data-page="config"            onclick="showPage('config')"><span class="mob-nav-icon">⚙️</span>Config</button>
-  </div>
+  <div class="mob-nav-inner" id="mob-nav-inner"></div>
 </nav>
 
-<div class="main" id="app-main"><div class="loading-page"><span class="spinner"></span> Cargando...</div></div>
+<div class="main" id="app-main-wrapper">
+  <!-- Banner tienda no configurada -->
+  <div id="store-banner">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Tienda online no configurada
+    <span style="color:var(--border)">·</span>
+    <a onclick="showPage('config')">Configurar ahora</a>
+    <a onclick="hideBanner()" style="margin-left:auto;color:var(--text-3)">Recordarme luego</a>
+  </div>
+  <!-- Barra de impersonación -->
+  <div id="impersonate-bar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7EB3FF" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span id="impersonate-label">Viendo como —</span>
+    <span style="color:var(--border)">·</span>
+    <a onclick="salirImpersonacion()">Salir de esta vista</a>
+  </div>
+  <div id="app-main" class="main-content"><div class="loading-page"><span class="spinner"></span> Cargando...</div></div>
+</div>
 
 <!-- Modal Venta -->
 <div class="modal-overlay" id="modal-venta">
   <div class="modal">
-    <div class="modal-title" id="modal-venta-title">➕ Nueva Venta</div>
+    <div class="modal-title" id="modal-venta-title">Nueva Venta</div>
     <form id="form-venta" onsubmit="submitVenta(event)">
       <input type="hidden" id="venta-id">
       <div class="form-group">
@@ -319,7 +462,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-venta')">Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="btn-guardar-venta">💾 Guardar</button>
+        <button type="submit" class="btn btn-primary" id="btn-guardar-venta">Guardar</button>
       </div>
     </form>
   </div>
@@ -328,7 +471,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <!-- Modal Cliente -->
 <div class="modal-overlay" id="modal-cliente">
   <div class="modal">
-    <div class="modal-title">👤 Nuevo Cliente</div>
+    <div class="modal-title">Nuevo Cliente</div>
     <form id="form-cliente" onsubmit="submitCliente(event)">
       <div class="form-group">
         <label class="form-label">Nombre y Apellido</label>
@@ -344,7 +487,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-cliente')">Cancelar</button>
-        <button type="submit" class="btn btn-success">✅ Agregar Cliente</button>
+        <button type="submit" class="btn btn-success">Agregar Cliente</button>
       </div>
     </form>
   </div>
@@ -353,7 +496,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <!-- Modal Gasto -->
 <div class="modal-overlay" id="modal-gasto">
   <div class="modal">
-    <div class="modal-title" id="modal-gasto-title">💸 Nuevo Gasto</div>
+    <div class="modal-title" id="modal-gasto-title">Nuevo Gasto</div>
     <form id="form-gasto" onsubmit="submitGasto(event)">
       <input type="hidden" id="gasto-id">
       <div class="form-group">
@@ -396,7 +539,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-gasto')">Cancelar</button>
-        <button type="submit" class="btn btn-danger" id="btn-guardar-gasto">💾 Guardar</button>
+        <button type="submit" class="btn btn-danger" id="btn-guardar-gasto">Guardar</button>
       </div>
     </form>
   </div>
@@ -405,7 +548,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <!-- Modal Producto -->
 <div class="modal-overlay" id="modal-producto">
   <div class="modal" style="width:560px">
-    <div class="modal-title" id="modal-producto-title">📦 Nuevo Producto</div>
+    <div class="modal-title" id="modal-producto-title">Nuevo Producto</div>
     <form id="form-producto" onsubmit="submitProducto(event)">
       <input type="hidden" id="producto-id">
       <div class="form-row">
@@ -438,22 +581,22 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Fotos del producto <span style="font-weight:400;color:#b2bec3;text-transform:none;letter-spacing:0">(máx. 10)</span></label>
+        <label class="form-label">Fotos del producto <span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">(máx. 10)</span></label>
         <div id="prod-images-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:0"></div>
         <label class="img-upload-label">
-          📁 Seleccionar fotos
+          Seleccionar fotos
           <input type="file" id="prod-image-files" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onImageFilesSelected(event)">
         </label>
-        <div style="font-size:11px;color:#b2bec3;margin-top:6px">JPG, PNG o WEBP · La primera foto es la principal</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px">JPG, PNG o WEBP · La primera foto es la principal</div>
       </div>
       <div class="form-group">
         <label class="form-label">Descripción (opcional)</label>
         <textarea class="form-input" id="prod-descripcion" rows="2" placeholder="Descripción para la tienda online..."></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label">Guía de talles <span style="font-weight:400;color:#b2bec3;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <label class="form-label">Guía de talles <span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">(opcional)</span></label>
         <textarea class="form-input" id="prod-guia-talles" rows="3" placeholder="Ej: Talle S → Contorno busto 88cm, cintura 68cm&#10;Talle M → Contorno busto 92cm, cintura 72cm&#10;Si tenés dudas consultanos por WhatsApp"></textarea>
-        <div style="font-size:11px;color:#b2bec3;margin-top:4px">Se muestra como acordeón expandible en la página del producto. Si está vacío, no aparece.</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px">Se muestra como acordeón expandible en la página del producto. Si está vacío, no aparece.</div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -471,7 +614,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-producto')">Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="btn-guardar-producto">💾 Guardar</button>
+        <button type="submit" class="btn btn-primary" id="btn-guardar-producto">Guardar</button>
       </div>
     </form>
   </div>
@@ -480,11 +623,11 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <!-- Modal Variantes -->
 <div class="modal-overlay" id="modal-variantes">
   <div class="modal" style="width:600px">
-    <div class="modal-title">🏷️ Gestionar Variantes</div>
-    <div id="variantes-producto-nombre" style="font-size:13px;color:#636e72;margin-bottom:14px;font-weight:600"></div>
+    <div class="modal-title">Gestionar Variantes</div>
+    <div id="variantes-producto-nombre" style="font-size:13px;color:var(--text-2);margin-bottom:14px;font-weight:600"></div>
     <div id="variantes-lista"></div>
     <hr class="divider">
-    <div style="font-size:12px;font-weight:700;color:#636e72;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">➕ Agregar color nuevo</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Agregar color nuevo</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
       <div class="form-group" style="margin:0;flex:1;min-width:120px">
         <label class="form-label">Nombre del color</label>
@@ -494,7 +637,7 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         <label class="form-label">URL de imagen (opcional)</label>
         <input type="text" class="form-input" id="nueva-color-imagen" placeholder="https://...">
       </div>
-      <button type="button" class="btn btn-success" onclick="agregarColor()">➕</button>
+      <button type="button" class="btn btn-success" onclick="agregarColor()">Agregar</button>
     </div>
     <div class="info-box" style="font-size:12px;margin-bottom:0">
       <strong>¿Sin colores?</strong> Si tu producto no tiene colores, usá el botón "Talle sin color" que aparece en la lista de arriba para agregar talles directamente.
@@ -508,11 +651,11 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <!-- Modal Ventas Online -->
 <div class="modal-overlay" id="modal-ventas-online">
   <div class="modal" style="width:560px">
-    <div class="modal-title">🌐 Ventas Online Pendientes</div>
+    <div class="modal-title">Ventas Online Pendientes</div>
     <div id="ventas-online-lista"></div>
     <div class="form-actions" style="margin-top:14px">
       <button type="button" class="btn btn-secondary" onclick="closeModal('modal-ventas-online')">Cerrar</button>
-      <button type="button" class="btn btn-primary" id="btn-procesar-ventas" onclick="procesarVentasOnline()" style="display:none">✅ Procesar todas y descontar stock</button>
+      <button type="button" class="btn btn-primary" id="btn-procesar-ventas" onclick="procesarVentasOnline()" style="display:none">Procesar todas y descontar stock</button>
     </div>
   </div>
 </div>
@@ -520,8 +663,8 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <!-- Modal Confirmar -->
 <div class="modal-overlay" id="modal-confirm">
   <div class="modal" style="max-width:360px">
-    <div class="modal-title">⚠️ Confirmar</div>
-    <p style="margin-bottom:20px;color:#636e72" id="confirm-message"></p>
+    <div class="modal-title">Confirmar</div>
+    <p style="margin-bottom:20px;color:var(--text-2)" id="confirm-message"></p>
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Cancelar</button>
       <button class="btn btn-danger" id="confirm-btn">Eliminar</button>
@@ -531,7 +674,8 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 
 <script>
 // ─── AUTH STATE ───────────────────────────────────────────────────────────────
-let _currentUser = null;
+let _currentUser = null;  // { id, email, rol, nombre, tipoCuenta, tiendaConfigurada }
+let _bannerHidden = false;
 
 function getToken() { return sessionStorage.getItem('gestion_token'); }
 function setToken(t) { sessionStorage.setItem('gestion_token', t); }
@@ -550,6 +694,7 @@ async function api(method, path, body) {
   return res.json();
 }
 
+// ─── LOGIN / LOGOUT ───────────────────────────────────────────────────────────
 async function doLogin(e) {
   e.preventDefault();
   const btn = document.getElementById('auth-btn');
@@ -571,9 +716,11 @@ async function doLogin(e) {
     setToken(data.token);
     _currentUser = data.user;
     hideAuthOverlay();
+    renderSidebar();
     renderUserBadge();
     await loadAll();
-    showPage('dashboard');
+    if (_currentUser.rol === 'admin') showPage('admin-dashboard');
+    else showPage('dashboard');
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
@@ -585,36 +732,236 @@ async function doLogin(e) {
 function doLogout() {
   clearToken();
   _currentUser = null;
+  _bannerHidden = false;
   document.getElementById('user-badge-container').style.display = 'none';
   showAuthOverlay();
 }
 
+// ─── AUTH OVERLAY VIEWS ───────────────────────────────────────────────────────
 function showAuthOverlay() {
   document.body.classList.add('app-hidden');
   document.getElementById('auth-loading').style.display = 'none';
+  hideAllAuthViews();
   document.getElementById('auth-form-wrapper').style.display = 'block';
   document.getElementById('auth-overlay').classList.add('open');
 }
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').classList.remove('open');
   document.body.classList.remove('app-hidden');
-  // Resetear al estado de carga para la próxima vez
   document.getElementById('auth-loading').style.display = 'flex';
-  document.getElementById('auth-form-wrapper').style.display = 'none';
+  hideAllAuthViews();
+}
+function hideAllAuthViews() {
+  ['auth-form-wrapper','reg-step1-wrapper','reg-step2-gestion-wrapper','reg-step2-tienda-wrapper']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+}
+function showLogin() {
+  hideAllAuthViews();
+  document.getElementById('auth-form-wrapper').style.display = 'block';
+}
+function showRegStep1() {
+  hideAllAuthViews();
+  document.getElementById('reg-step1-wrapper').style.display = 'block';
+}
+function showRegStep2() {
+  const tipo = window._regTipoCuenta;
+  if (!tipo) return;
+  hideAllAuthViews();
+  if (tipo === 'gestion') document.getElementById('reg-step2-gestion-wrapper').style.display = 'block';
+  else document.getElementById('reg-step2-tienda-wrapper').style.display = 'block';
 }
 
+let _regTipoCuenta = null;
+function selectRegType(tipo) {
+  _regTipoCuenta = tipo;
+  window._regTipoCuenta = tipo;
+  document.querySelectorAll('.reg-type-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('reg-card-' + tipo)?.classList.add('selected');
+  document.getElementById('reg-step1-btn').disabled = false;
+}
+
+// ─── REGISTRO ─────────────────────────────────────────────────────────────────
+async function doRegistro(e, tipo, skipTienda = false) {
+  if (e) e.preventDefault();
+
+  const errId = tipo === 'gestion' ? 'reg-error-gestion' : 'reg-error-tienda';
+  const btnId = tipo === 'gestion' ? 'reg-btn-g' : 'reg-btn-t';
+  const errEl = document.getElementById(errId);
+  errEl.style.display = 'none';
+
+  const nombre = document.getElementById(tipo === 'gestion' ? 'reg-nombre-g' : 'reg-nombre-t')?.value?.trim();
+  const email = document.getElementById(tipo === 'gestion' ? 'reg-email-g' : 'reg-email-t')?.value?.trim();
+  const pass = document.getElementById(tipo === 'gestion' ? 'reg-pass-g' : 'reg-pass-t')?.value;
+  const pass2 = document.getElementById(tipo === 'gestion' ? 'reg-pass2-g' : 'reg-pass2-t')?.value;
+
+  if (!nombre || !email || !pass) { errEl.textContent = 'Completá todos los campos.'; errEl.style.display = 'block'; return; }
+  if (pass.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.'; errEl.style.display = 'block'; return; }
+  if (pass !== pass2) { errEl.textContent = 'Las contraseñas no coinciden.'; errEl.style.display = 'block'; return; }
+
+  const payload = { nombre, email, password: pass, tipoCuenta: tipo };
+
+  if (tipo === 'gestion_tienda' && !skipTienda) {
+    const tiendaNombre = document.getElementById('reg-tienda-nombre')?.value?.trim();
+    const tiendaUrl = document.getElementById('reg-tienda-url')?.value?.trim();
+    const deployHook = document.getElementById('reg-deploy-hook')?.value?.trim();
+    if (tiendaNombre && tiendaUrl) {
+      payload.tiendaNombre = tiendaNombre;
+      payload.tiendaUrl = tiendaUrl;
+      payload.vercelDeployHook = deployHook;
+      payload.tiendaConfigurada = true;
+    }
+  }
+
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Creando cuenta...'; }
+
+  try {
+    const r = await fetch('/api/auth/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error al crear cuenta');
+
+    // Auto-login
+    setToken(data.token);
+    _currentUser = data.user;
+    hideAuthOverlay();
+    renderSidebar();
+    renderUserBadge();
+    showStoreBanner();
+    await loadAll();
+    showPage('dashboard');
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = tipo === 'gestion' ? 'Crear cuenta' : 'Crear cuenta y configurar tienda'; }
+  }
+}
+
+// ─── SIDEBAR DINÁMICO ─────────────────────────────────────────────────────────
+function renderSidebar() {
+  if (!_currentUser) return;
+  const isAdmin = _currentUser.rol === 'admin';
+  const tipoCuenta = _currentUser.tipoCuenta || 'gestion';
+  const sidebar = document.getElementById('sidebar');
+
+  if (isAdmin) sidebar.classList.add('admin-sidebar');
+  else sidebar.classList.remove('admin-sidebar');
+
+  // Logo
+  const logo = document.getElementById('sidebar-logo');
+  if (logo) {
+    logo.innerHTML = isAdmin
+      ? `CHANA Gestión <span class="admin-badge">ADMIN</span><span>Panel de administración</span>`
+      : `CHANA<span>Gestión de Ventas</span>`;
+  }
+
+  // Navegación
+  const nav = document.getElementById('sidebar-nav');
+  if (!nav) return;
+
+  const svgs = {
+    dashboard: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    clientes:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    ventas:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    meses:     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    deudas:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    gastos:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+    stock:     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>',
+    resultados:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    config:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    usuarios:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    actividad: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+    impersonar:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  };
+
+  function navItem(page, icon, label) {
+    return `<div class="nav-item" data-page="${page}" onclick="showPage('${page}')">${svgs[icon] || ''}${label}</div>`;
+  }
+
+  let html = '';
+  if (isAdmin) {
+    html = `
+      <div class="nav-section-label">Plataforma</div>
+      ${navItem('admin-dashboard','dashboard','Dashboard global')}
+      ${navItem('admin-usuarios','usuarios','Usuarios')}
+      ${navItem('admin-ventas','ventas','Ventas globales')}
+      ${navItem('admin-actividad','actividad','Actividad')}
+      <div class="nav-section-label">Herramientas</div>
+      ${navItem('admin-config','config','Configuración del sistema')}
+    `;
+  } else {
+    const conTienda = tipoCuenta === 'gestion_tienda';
+    html = `
+      ${navItem('dashboard','dashboard','Dashboard')}
+      ${navItem('clientes','clientes','Clientes')}
+      ${navItem('ventas','ventas','Ventas')}
+      ${navItem('meses','meses','Balance Mensual')}
+      ${navItem('deudas','deudas','Deudas')}
+      ${navItem('gastos','gastos','Gastos')}
+      ${conTienda ? navItem('stock','stock','Stock & Tienda') : navItem('stock','stock','Stock')}
+      ${navItem('resultados','resultados','Resultados')}
+      ${navItem('config','config','Configuración')}
+    `;
+  }
+  nav.innerHTML = html;
+
+  // Mobile nav
+  const mobInner = document.getElementById('mob-nav-inner');
+  if (mobInner) {
+    if (isAdmin) {
+      mobInner.innerHTML = `
+        <button class="mob-nav-item" data-page="admin-dashboard" onclick="showPage('admin-dashboard')"><span class="mob-nav-icon">${svgs.dashboard}</span>Dashboard</button>
+        <button class="mob-nav-item" data-page="admin-usuarios" onclick="showPage('admin-usuarios')"><span class="mob-nav-icon">${svgs.usuarios}</span>Usuarios</button>
+        <button class="mob-nav-item" data-page="admin-actividad" onclick="showPage('admin-actividad')"><span class="mob-nav-icon">${svgs.actividad}</span>Actividad</button>
+        <button class="mob-nav-item" data-page="admin-config" onclick="showPage('admin-config')"><span class="mob-nav-icon">${svgs.config}</span>Config</button>
+      `;
+    } else {
+      mobInner.innerHTML = `
+        <button class="mob-nav-item" data-page="dashboard" onclick="showPage('dashboard')"><span class="mob-nav-icon">${svgs.dashboard}</span>Inicio</button>
+        <button class="mob-nav-item" data-page="clientes" onclick="showPage('clientes')"><span class="mob-nav-icon">${svgs.clientes}</span>Clientes</button>
+        <button class="mob-nav-item" data-page="deudas" onclick="showPage('deudas')"><span class="mob-nav-icon">${svgs.deudas}</span>Deudas</button>
+        <button class="mob-nav-item" data-page="ventas" onclick="showPage('ventas')"><span class="mob-nav-icon">${svgs.ventas}</span>Ventas</button>
+        <button class="mob-nav-item" data-page="gastos" onclick="showPage('gastos')"><span class="mob-nav-icon">${svgs.gastos}</span>Gastos</button>
+        <button class="mob-nav-item" data-page="stock" onclick="showPage('stock')"><span class="mob-nav-icon">${svgs.stock}</span>Stock</button>
+        <button class="mob-nav-item" data-page="resultados" onclick="showPage('resultados')"><span class="mob-nav-icon">${svgs.resultados}</span>Result.</button>
+        <button class="mob-nav-item" data-page="config" onclick="showPage('config')"><span class="mob-nav-icon">${svgs.config}</span>Config</button>
+      `;
+    }
+  }
+}
+
+// ─── BANNER TIENDA ────────────────────────────────────────────────────────────
+function showStoreBanner() {
+  if (!_currentUser) return;
+  if (_currentUser.tipoCuenta !== 'gestion_tienda') return;
+  if (_currentUser.tiendaConfigurada) return;
+  if (_bannerHidden) return;
+  const b = document.getElementById('store-banner');
+  if (b) b.style.display = 'flex';
+}
+function hideBanner() {
+  _bannerHidden = true;
+  const b = document.getElementById('store-banner');
+  if (b) b.style.display = 'none';
+}
+
+// ─── RENDERIZADO USUARIO BADGE ────────────────────────────────────────────────
 function renderUserBadge() {
   if (!_currentUser) return;
   const container = document.getElementById('user-badge-container');
   const nameEl = document.getElementById('user-badge-name');
   const roleEl = document.getElementById('user-badge-role');
-  nameEl.textContent = _currentUser.email || 'Usuario';
+  nameEl.textContent = _currentUser.nombre || _currentUser.email || 'Usuario';
   const rol = _currentUser.rol || 'usuario';
-  roleEl.textContent = rol;
+  roleEl.textContent = rol === 'admin' ? 'admin' : 'usuario';
   roleEl.className = 'user-badge-role ' + rol;
   container.style.display = 'block';
 }
 
+// ─── AUTH INIT ────────────────────────────────────────────────────────────────
 async function initAuth() {
   const token = getToken();
   if (!token) { showAuthOverlay(); return false; }
@@ -622,21 +969,58 @@ async function initAuth() {
     const me = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
     if (!me.ok) { doLogout(); return false; }
     _currentUser = (await me.json()).user;
+    renderSidebar();
     renderUserBadge();
+    showStoreBanner();
     return true;
   } catch { doLogout(); return false; }
+}
+
+// ─── IMPERSONACIÓN ────────────────────────────────────────────────────────────
+let _impersonating = null;
+
+async function impersonarUsuario(userId, nombre) {
+  _impersonating = { userId, nombre };
+  const bar = document.getElementById('impersonate-bar');
+  const label = document.getElementById('impersonate-label');
+  if (bar) { bar.style.display = 'flex'; }
+  if (label) label.textContent = `Viendo como ${nombre}`;
+  // Deshabilitar todos los botones de acción
+  document.querySelectorAll('.btn-primary, .btn-success, .btn-danger, .btn-warning').forEach(b => {
+    b.disabled = true;
+    b.style.opacity = '0.4';
+  });
+  showPage('dashboard');
+}
+
+function salirImpersonacion() {
+  _impersonating = null;
+  const bar = document.getElementById('impersonate-bar');
+  if (bar) bar.style.display = 'none';
+  document.querySelectorAll('button[disabled]').forEach(b => {
+    b.disabled = false;
+    b.style.opacity = '';
+  });
+  showPage('admin-usuarios');
 }
 
 // ─── CACHÉ ────────────────────────────────────────────────────────────────────
 let clientes = [], ventas = [], gastos = [], productos = [];
 
 async function loadAll() {
-  [clientes, ventas, gastos, productos] = await Promise.all([
+  if (!_currentUser || _currentUser.rol === 'admin') return;
+  const tipoCuenta = _currentUser.tipoCuenta || 'gestion';
+  const promises = [
     api('GET', '/api/clientes'),
     api('GET', '/api/ventas'),
     api('GET', '/api/gastos'),
-    api('GET', '/api/productos'),
-  ]);
+  ];
+  if (tipoCuenta === 'gestion_tienda') promises.push(api('GET', '/api/productos'));
+  const results = await Promise.all(promises);
+  clientes = results[0];
+  ventas   = results[1];
+  gastos   = results[2];
+  productos = results[3] || [];
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -653,11 +1037,11 @@ function toggleOcultar() {
   valoresOcultos = !valoresOcultos;
   const btn = document.getElementById('btn-ocultar');
   if (valoresOcultos) {
-    btn.innerHTML = '🙈 Mostrar valores';
-    btn.style.background = 'rgba(231,76,60,.5)';
+    btn.innerHTML = 'Mostrar valores';
+    btn.style.background = 'rgba(139,32,32,.4)';
   } else {
-    btn.innerHTML = '👁️ Ocultar valores';
-    btn.style.background = 'rgba(255,255,255,.1)';
+    btn.innerHTML = 'Ocultar valores';
+    btn.style.background = 'rgba(255,255,255,.07)';
   }
   rerenderPage();
 }
@@ -677,10 +1061,7 @@ function rerenderPage() {
 function fmtDate(s)  { if(!s)return'—'; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
 function initials(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 
-const COLORS=['linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)',
-  'linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)',
-  'linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#fd7043,#ff8a65)',
-  'linear-gradient(135deg,#26c6da,#00acc1)','linear-gradient(135deg,#a1c4fd,#c2e9fb)'];
+const COLORS=['#7B6B5E','#5C7A6E','#6E6A8C','#7A5C6E','#5C6E7A','#7A6E5C','#6E7A5C','#5C7A7A'];
 function avatarColor(n){let h=0;for(const c of n)h+=c.charCodeAt(0);return COLORS[h%COLORS.length];}
 
 function isVencida(s){ return s&&new Date(s)<new Date(); }
@@ -710,6 +1091,17 @@ async function showPage(page,extra){
   currentPage=page; closeSidebar();
   updateNav(page);
   setMain('<div class="loading-page"><span class="spinner"></span> Cargando...</div>');
+
+  // Páginas admin
+  if (page.startsWith('admin-')) {
+    if      (page==='admin-dashboard')  await renderAdminDashboard();
+    else if (page==='admin-usuarios')   await renderAdminUsuarios();
+    else if (page==='admin-ventas')     await renderAdminVentas();
+    else if (page==='admin-actividad')  await renderAdminActividad();
+    else if (page==='admin-config')     await renderAdminConfig();
+    return;
+  }
+
   await loadAll();
   if      (page==='dashboard')       renderDashboard();
   else if (page==='clientes')        renderClientes();
@@ -720,9 +1112,13 @@ async function showPage(page,extra){
   else if (page==='gastos')          renderGastos();
   else if (page==='resultados')      renderResultados();
   else if (page==='config')          renderConfig();
-  else if (page==='stock')           renderStock();
+  else if (page==='stock')           {
+    const tc = _currentUser?.tipoCuenta || 'gestion';
+    if (tc !== 'gestion_tienda') { renderStockSinTienda(); return; }
+    renderStock();
+  }
 }
-function setMain(html){ document.getElementById('app-main').innerHTML=html; }
+function setMain(html){ const el = document.getElementById('app-main'); if(el) el.innerHTML=html; }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('open');
@@ -742,8 +1138,8 @@ function renderDashboard(){
   const ganNeta=totalVtas-totalGastos;
 
   let alerts='';
-  if(vencidas.length) alerts+=alertHTML('red','🔴 Cuotas Vencidas',vencidas);
-  if(proximas.length) alerts+=alertHTML('yellow','🟡 Cuotas esta semana',proximas);
+  if(vencidas.length) alerts+=alertHTML('red','Cuotas Vencidas',vencidas);
+  if(proximas.length) alerts+=alertHTML('yellow','Cuotas esta semana',proximas);
 
   let rows=''; let tV=0,tG2=0,tNet=0;
   for(let m=0;m<12;m++){
@@ -765,7 +1161,7 @@ function renderDashboard(){
 
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">📊 Dashboard</div><div class="page-subtitle">Resumen general del emprendimiento</div></div>
+    <div><div class="page-title">Dashboard</div><div class="page-subtitle">Resumen general del emprendimiento</div></div>
     <div class="year-selector">
       <button class="year-btn" onclick="changeYear(-1)">◀</button>
       <div class="year-display">${currentYear}</div>
@@ -800,10 +1196,12 @@ function goToMes(m){ currentMes=m; currentMesYear=currentYear; showPage('meses')
 function renderClientes(){
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">👥 Clientes</div><div class="page-subtitle">${clientes.length} clientes registrados</div></div>
-    <button class="btn btn-success" onclick="openModalCliente()">➕ Nuevo</button>
+    <div><div class="page-title">Clientes</div><div class="page-subtitle">${clientes.length} clientes registrados</div></div>
+    <button class="btn btn-success" onclick="openModalCliente()">Nuevo cliente</button>
   </div>
-  <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="search-clientes" placeholder="Buscar cliente por nombre..." oninput="filterClientes()" style="padding-left:40px" autocomplete="off"></div>
+  <div class="search-box"><span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </span><input type="text" id="search-clientes" placeholder="Buscar cliente por nombre..." oninput="filterClientes()" style="padding-left:40px" autocomplete="off"></div>
   <div id="clientes-list"></div>`);
   filterClientes();
 }
@@ -812,13 +1210,13 @@ function filterClientes(){
   const q=(document.getElementById('search-clientes')?.value||'').toLowerCase();
   const list=clientes.filter(c=>c.nombre.toLowerCase().includes(q));
   let html='';
-  if(!list.length){ html=`<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'No hay clientes todavía'}</div></div>`; }
+  if(!list.length){ html=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'No hay clientes todavía'}</div></div>`; }
   else{ html=`<div class="client-list">`+list.map(c=>{
     const vs=ventasByCliente(c.id), deuda=vs.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
     return`<div class="client-card" onclick="showPage('cliente-detalle','${c.id}')">
       <div class="avatar" style="background:${avatarColor(c.nombre)}">${initials(c.nombre)}</div>
       <div style="flex:1;min-width:0"><div class="client-name">${c.nombre}</div><div class="client-meta">${c.telefono||'Sin teléfono'} · ${vs.length} venta${vs.length!==1?'s':''}</div></div>
-      <div style="text-align:right;flex-shrink:0"><div class="client-deuda ${deuda===0?'zero':'pos'}">${fmt(deuda)}</div><div style="font-size:11px;color:#636e72">adeuda</div></div>
+      <div style="text-align:right;flex-shrink:0"><div class="client-deuda ${deuda===0?'zero':'pos'}">${fmt(deuda)}</div><div style="font-size:11px;color:var(--text-2)">adeuda</div></div>
     </div>`;
   }).join('')+`</div>`; }
   document.getElementById('clientes-list').innerHTML=html;
@@ -841,7 +1239,7 @@ function renderDeudas(){
 
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">💰 Deudas</div><div class="page-subtitle">${conDeuda.length} clientes con deuda</div></div>
+    <div><div class="page-title">Deudas</div><div class="page-subtitle">${conDeuda.length} clientes con deuda</div></div>
     <div class="stat-card" style="padding:10px 16px">
       <div class="stat-label">Total adeudado</div>
       <div class="stat-value red" style="font-size:18px">${fmt(total)}</div>
@@ -849,14 +1247,16 @@ function renderDeudas(){
   </div>
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
     <div class="search-box" style="flex:1;min-width:180px;margin-bottom:0">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </span>
       <input type="text" id="search-deudas" placeholder="Buscar cliente..." oninput="filterDeudas()" style="padding-left:40px" autocomplete="off">
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-sm ${deudaOrden==='mayor'?'btn-primary':'btn-secondary'}" onclick="setDeudaOrden('mayor')">↓ Mayor</button>
       <button class="btn btn-sm ${deudaOrden==='menor'?'btn-primary':'btn-secondary'}" onclick="setDeudaOrden('menor')">↑ Menor</button>
-      <button class="btn btn-sm ${deudaOrden==='reciente'?'btn-primary':'btn-secondary'}" onclick="setDeudaOrden('reciente')">📅 Reciente</button>
-      <button class="btn btn-sm ${deudaOrden==='antiguo'?'btn-primary':'btn-secondary'}" onclick="setDeudaOrden('antiguo')">📅 Antiguo</button>
+      <button class="btn btn-sm ${deudaOrden==='reciente'?'btn-primary':'btn-secondary'}" onclick="setDeudaOrden('reciente')">Reciente</button>
+      <button class="btn btn-sm ${deudaOrden==='antiguo'?'btn-primary':'btn-secondary'}" onclick="setDeudaOrden('antiguo')">Antiguo</button>
     </div>
   </div>
   <div id="deudas-list"></div>`);
@@ -884,7 +1284,7 @@ function filterDeudas(){
 
   let html='';
   if(!conDeuda.length){
-    html=`<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'Ningún cliente tiene deuda pendiente'}</div></div>`;
+    html=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M20 6 9 17l-5-5"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'Ningún cliente tiene deuda pendiente'}</div></div>`;
   } else {
     html=`<div class="client-list">`+conDeuda.map(({c,vs,totalAdeuda,ultimaFecha,proxCuota})=>{
       const vencida=proxCuota&&isVencida(proxCuota);
@@ -898,7 +1298,7 @@ function filterDeudas(){
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div class="client-deuda pos">${fmt(totalAdeuda)}</div>
-          <div style="font-size:11px;color:#636e72">adeuda</div>
+          <div style="font-size:11px;color:var(--text-2)">adeuda</div>
         </div>
       </div>`;
     }).join('')+`</div>`;
@@ -911,14 +1311,14 @@ function renderClienteDetalle(){
   const c=getCliente(currentClienteId); if(!c){showPage('clientes');return;}
   const vs=ventasByCliente(currentClienteId), t=totalesV(vs);
   let tabla='';
-  if(!vs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon">🛍️</div><div class="empty-state-text">Sin ventas registradas</div></div>`; }
+  if(!vs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div class="empty-state-text">Sin ventas registradas</div></div>`; }
   else{ tabla=`<div class="table-container"><table class="table-responsive">
     <thead><tr><th>Prenda</th><th>Cant.</th><th>P.Unit.</th><th>Fecha</th><th>Total</th><th>Costo</th><th>Pagado</th><th>Adeuda</th><th>Próx. Cuota</th><th></th></tr></thead>
     <tbody>${vs.map(v=>{
       const cv=isVencida(v.proxCuota)&&(parseFloat(v.adeuda)||0)>0;
       const cp=isProxima(v.proxCuota)&&!cv&&(parseFloat(v.adeuda)||0)>0;
       return`<tr>
-        <td data-label="Prenda"><strong>${v.prenda}</strong>${v.notas?`<br><small style="color:#636e72">${v.notas}</small>`:''}</td>
+        <td data-label="Prenda"><strong>${v.prenda}</strong>${v.notas?`<br><small style="color:var(--text-2)">${v.notas}</small>`:''}</td>
         <td data-label="Cant.">${v.cantidad||1}</td>
         <td data-label="P.Unit.">${fmt(v.precioUnitario||v.precioVenta)}</td>
         <td data-label="Fecha">${fmtDate(v.fechaCompra)}</td>
@@ -928,8 +1328,8 @@ function renderClienteDetalle(){
         <td data-label="Adeuda" class="${(parseFloat(v.adeuda)||0)>0?'amt-neg':'amt-pos'}">${fmt(v.adeuda)}</td>
         <td data-label="Cuota">${v.proxCuota?fmtDate(v.proxCuota)+(cv?' <span class="badge badge-red">Vencida</span>':cp?' <span class="badge badge-orange">Pronto</span>':''):'—'}</td>
         <td data-label="">
-          <button class="btn btn-secondary btn-sm" onclick="editVenta('${v.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('venta','${v.id}')">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="editVenta('${v.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('venta','${v.id}')">Eliminar</button>
         </td>
       </tr>`;
     }).join('')}</tbody>
@@ -943,8 +1343,8 @@ function renderClienteDetalle(){
       <div><div class="page-title">${c.nombre}</div><div class="page-subtitle">${c.telefono||''}${c.notas?' · '+c.notas:''}</div></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-danger btn-sm" onclick="confirmDelete('cliente','${c.id}')">🗑️</button>
-      <button class="btn btn-primary" onclick="openModalVenta('${c.id}')">➕ Nueva Venta</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete('cliente','${c.id}')">Eliminar</button>
+      <button class="btn btn-primary" onclick="openModalVenta('${c.id}')">Nueva Venta</button>
     </div>
   </div>
   <div class="stats-grid" style="margin-bottom:16px">
@@ -959,10 +1359,12 @@ function renderClienteDetalle(){
 function renderVentas(){
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">🛍️ Todas las Ventas</div><div class="page-subtitle">${ventas.length} ventas registradas</div></div>
-    <button class="btn btn-primary" onclick="openModalVenta()">➕ Nueva</button>
+    <div><div class="page-title">Todas las Ventas</div><div class="page-subtitle">${ventas.length} ventas registradas</div></div>
+    <button class="btn btn-primary" onclick="openModalVenta()">Nueva venta</button>
   </div>
-  <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="search-ventas" placeholder="Buscar por cliente o prenda..." oninput="filterVentas()" style="padding-left:40px" autocomplete="off"></div>
+  <div class="search-box"><span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </span><input type="text" id="search-ventas" placeholder="Buscar por cliente o prenda..." oninput="filterVentas()" style="padding-left:40px" autocomplete="off"></div>
   <div class="card" id="ventas-tabla"></div>`);
   filterVentas();
 }
@@ -972,7 +1374,7 @@ function filterVentas(){
   let vs=[...ventas].sort((a,b)=>(b.fechaCompra||'').localeCompare(a.fechaCompra||''));
   if(q) vs=vs.filter(v=>{const c=getCliente(v.clienteId);return v.prenda.toLowerCase().includes(q)||(c&&c.nombre.toLowerCase().includes(q));});
   let tabla='';
-  if(!vs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon">🛍️</div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'No hay ventas todavía'}</div></div>`; }
+  if(!vs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'No hay ventas todavía'}</div></div>`; }
   else{ tabla=`<div class="table-container"><table class="table-responsive">
     <thead><tr><th>Cliente</th><th>Prenda</th><th>Cant.</th><th>Fecha</th><th>Total</th><th>Costo</th><th>Pagado</th><th>Adeuda</th><th>Cuota</th><th></th></tr></thead>
     <tbody>${vs.map(v=>{
@@ -988,10 +1390,10 @@ function filterVentas(){
         <td data-label="Costo" class="amt-neg">${fmt(v.costo)}</td>
         <td data-label="Pagado" class="amt-pos">${fmt(v.pagado)}</td>
         <td data-label="Adeuda" class="${(parseFloat(v.adeuda)||0)>0?'amt-neg':'amt-pos'}">${fmt(v.adeuda)}</td>
-        <td data-label="Cuota">${v.proxCuota?fmtDate(v.proxCuota)+(cv?' <span class="badge badge-red">⚠️</span>':cp?' <span class="badge badge-orange">📅</span>':''):'—'}</td>
+        <td data-label="Cuota">${v.proxCuota?fmtDate(v.proxCuota)+(cv?' <span class="badge badge-red">Vencida</span>':cp?' <span class="badge badge-orange">Próxima</span>':''):'—'}</td>
         <td data-label="">
-          <button class="btn btn-secondary btn-sm" onclick="editVenta('${v.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('venta','${v.id}')">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="editVenta('${v.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('venta','${v.id}')">Eliminar</button>
         </td>
       </tr>`;
     }).join('')}</tbody>
@@ -1006,7 +1408,7 @@ function renderMeses(){
   const t=totalesV(vs), tg=totalesG(gs), gan=t.ventas-tg;
   const tabs=MESES.map((m,i)=>`<div class="month-tab ${i===currentMes?'active':''}" onclick="selectMes(${i})">${m.slice(0,3)}</div>`).join('');
   let tabla='';
-  if(!vs.length&&!gs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text">Sin movimientos en ${MESES[currentMes]}</div></div>`; }
+  if(!vs.length&&!gs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-state-text">Sin movimientos en ${MESES[currentMes]}</div></div>`; }
   else{ tabla=`<div class="table-container"><table class="table-responsive">
     <thead><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Ingreso</th><th>Costo merc.</th><th>Gasto</th></tr></thead>
     <tbody>
@@ -1020,7 +1422,7 @@ function renderMeses(){
     </tr>`;}).join('')}
     ${gs.map(g=>`<tr>
       <td data-label="Tipo"><span class="badge badge-red">Gasto</span>${g.categoria?` <span class="badge badge-purple">${g.categoria}</span>`:''}</td>
-      <td data-label="Descripción">${g.descripcion}${g.notas?` <small style="color:#636e72">— ${g.notas}</small>`:''}</td>
+      <td data-label="Descripción">${g.descripcion}${g.notas?` <small style="color:var(--text-2)">— ${g.notas}</small>`:''}</td>
       <td data-label="Fecha">${fmtDate(g.fecha)}</td>
       <td data-label="Ingreso">—</td>
       <td data-label="Costo">—</td>
@@ -1034,7 +1436,7 @@ function renderMeses(){
   </table></div>`; }
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">📅 Balance Mensual</div><div class="page-subtitle">${MESES[currentMes]} ${currentMesYear}</div></div>
+    <div><div class="page-title">Balance Mensual</div><div class="page-subtitle">${MESES[currentMes]} ${currentMesYear}</div></div>
     <div class="year-selector">
       <button class="year-btn" onclick="changeMesYear(-1)">◀</button>
       <div class="year-display">${currentMesYear}</div>
@@ -1058,7 +1460,7 @@ function renderGastos(){
   const sorted=[...gastos].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   const totalGastos=gastos.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
   let tabla='';
-  if(!sorted.length){ tabla=`<div class="empty-state"><div class="empty-state-icon">💸</div><div class="empty-state-text">No hay gastos registrados</div></div>`; }
+  if(!sorted.length){ tabla=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="empty-state-text">No hay gastos registrados</div></div>`; }
   else{ tabla=`<div class="table-container"><table class="table-responsive">
     <thead><tr><th>Descripción</th><th>Cant.</th><th>P.Unit.</th><th>Categoría</th><th>Fecha</th><th>Total</th><th>Notas</th><th></th></tr></thead>
     <tbody>${sorted.map(g=>`<tr>
@@ -1068,18 +1470,18 @@ function renderGastos(){
       <td data-label="Categoría">${g.categoria?`<span class="badge badge-purple">${g.categoria}</span>`:'—'}</td>
       <td data-label="Fecha">${fmtDate(g.fecha)}</td>
       <td data-label="Total" class="amt-neg">${fmt(g.monto)}</td>
-      <td data-label="Notas"><small style="color:#636e72">${g.notas||'—'}</small></td>
+      <td data-label="Notas"><small style="color:var(--text-2)">${g.notas||'—'}</small></td>
       <td data-label="">
-        <button class="btn btn-secondary btn-sm" onclick="editGasto('${g.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmDelete('gasto','${g.id}')">🗑️</button>
+        <button class="btn btn-secondary btn-sm" onclick="editGasto('${g.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('gasto','${g.id}')">Eliminar</button>
       </td>
     </tr>`).join('')}</tbody>
     <tfoot><tr><td colspan="5">TOTAL GASTOS</td><td class="amt-neg">${fmt(totalGastos)}</td><td colspan="2"></td></tr></tfoot>
   </table></div>`; }
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">💸 Gastos</div><div class="page-subtitle">Todos los gastos del negocio</div></div>
-    <button class="btn btn-danger" onclick="openModalGasto()">➕ Nuevo</button>
+    <div><div class="page-title">Gastos</div><div class="page-subtitle">Todos los gastos del negocio</div></div>
+    <button class="btn btn-danger" onclick="openModalGasto()">Nuevo gasto</button>
   </div>
   <div class="stats-grid" style="margin-bottom:16px">
     <div class="stat-card"><div class="stat-label">Cantidad</div><div class="stat-value blue">${gastos.length}</div></div>
@@ -1098,7 +1500,7 @@ function renderResultados(){
     const tv=totalesV(vs), tg=totalesG(gs), gan=tv.ventas-tg;
     tV+=tv.ventas; tG+=tg; tNet+=gan;
     const isCur=m===new Date().getMonth()&&resYear===new Date().getFullYear();
-    const cls=m===resMes?'style="background:#ebf5fb"':'';
+    const cls=m===resMes?'style="background:var(--surface-2)"':'';
     rows+=`<tr ${cls} style="cursor:pointer" onclick="selectResMes(${m})">
       <td data-label="Mes"><strong>${MESES[m]}</strong>${isCur?' <span class="badge badge-blue">Actual</span>':''}</td>
       <td data-label="Ingresos" class="amt-pos">${fmt(tv.ventas)}</td>
@@ -1112,7 +1514,7 @@ function renderResultados(){
 
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">📈 Estado de Resultados</div><div class="page-subtitle">Ingresos vs Egresos — ${resYear}</div></div>
+    <div><div class="page-title">Estado de Resultados</div><div class="page-subtitle">Ingresos vs Egresos — ${resYear}</div></div>
     <div class="year-selector">
       <button class="year-btn" onclick="changeResYear(-1)">◀</button>
       <div class="year-display">${resYear}</div>
@@ -1140,9 +1542,9 @@ function renderResultados(){
       <div class="stat-card"><div class="stat-label">Gastos</div><div class="stat-value red">${fmt(mtg)}</div></div>
       <div class="stat-card"><div class="stat-label">Ganancia / Pérdida</div><div class="stat-value ${mgan>=0?'green':'red'}">${fmt(mgan)}</div></div>
     </div>
-    <div style="margin-top:12px;padding:14px;background:${mgan>=0?'#f0fff4':'#fff5f5'};border-radius:10px;text-align:center">
-      <div style="font-size:13px;color:#636e72;margin-bottom:4px">${MESES[resMes]} ${resYear}</div>
-      <div style="font-size:26px;font-weight:700;color:${mgan>=0?'#00b894':'#e17055'}">${mgan>=0?'✅ Ganancia':'❌ Pérdida'}: ${fmt(Math.abs(mgan))}</div>
+    <div style="margin-top:12px;padding:14px;background:${mgan>=0?'rgba(58,125,68,.08)':'rgba(139,32,32,.08)'};border:1px solid ${mgan>=0?'rgba(58,125,68,.2)':'rgba(139,32,32,.2)'};border-radius:8px;text-align:center">
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:4px">${MESES[resMes]} ${resYear}</div>
+      <div style="font-size:24px;font-weight:600;color:${mgan>=0?'var(--success)':'var(--danger)'}">${mgan>=0?'Ganancia':'Pérdida'}: ${fmt(Math.abs(mgan))}</div>
     </div>
   </div>`);
 }
@@ -1155,11 +1557,11 @@ async function renderConfig(){
   const mpConectado=cfg.mpConectado||false;
   const mpUserId=cfg.mpUserId||'';
   const lastSync=cfg.mpLastSync?new Date(cfg.mpLastSync).toLocaleString('es-AR'):'Nunca';
-  setMain(`
-  <div class="page-header"><div><div class="page-title">⚙️ Configuración</div><div class="page-subtitle">Mi Tienda y MercadoPago</div></div></div>
+  const esTienda = (_currentUser?.tipoCuenta||'gestion') === 'gestion_tienda';
 
+  const tiendaSection = esTienda ? `
   <div class="card" style="margin-bottom:18px">
-    <h3 style="margin-bottom:14px;font-size:15px">🏪 Mi Tienda</h3>
+    <h3 style="margin-bottom:14px;font-size:15px;color:var(--text)">Mi Tienda</h3>
     <form onsubmit="saveConfig(event)">
       <div class="form-row">
         <div class="form-group">
@@ -1172,36 +1574,41 @@ async function renderConfig(){
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Vercel Deploy Hook <span style="color:#888;font-weight:400">(para publicar stock automáticamente)</span></label>
+        <label class="form-label">Vercel Deploy Hook <span style="color:var(--text-3);font-weight:400">(para publicar stock automáticamente)</span></label>
         <input type="url" class="form-input" id="cfg-deploy-hook" value="${cfg.vercelDeployHook||''}" placeholder="https://api.vercel.com/v1/integrations/deploy/...">
-        <div style="font-size:11px;color:#888;margin-top:5px">Vercel Dashboard → tu proyecto → Settings → Git → Deploy Hooks → crear hook "stock" → copiar URL</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:5px">Vercel Dashboard → tu proyecto → Settings → Git → Deploy Hooks → crear hook "stock" → copiar URL</div>
       </div>
       <div class="form-actions" style="justify-content:flex-start">
-        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
       </div>
     </form>
     <div id="config-result" style="margin-top:10px"></div>
   </div>
 
   <div class="card" style="margin-bottom:18px">
-    <h3 style="margin-bottom:14px;font-size:15px">💳 MercadoPago</h3>
+    <h3 style="margin-bottom:14px;font-size:15px;color:var(--text)">MercadoPago</h3>
     <div id="mp-connect-panel">
       <div id="mp-status-text" style="font-size:13px;margin-bottom:12px">
         ${mpConectado
-          ? `<span style="color:#1e8449">✅ <strong>Conectado</strong> — cuenta MP: ${mpUserId}</span> <span style="color:#888;font-size:11px"> · Última sync: ${lastSync}</span>`
-          : `<span style="color:#636e72">No conectado. Conectá tu cuenta para sincronizar ventas automáticamente.</span>`}
+          ? `<span style="color:#5CB870"><strong>Conectado</strong> — cuenta MP: ${mpUserId}</span> <span style="color:var(--text-3);font-size:11px"> · Última sync: ${lastSync}</span>`
+          : `<span style="color:var(--text-2)">No conectado. Conectá tu cuenta para sincronizar ventas automáticamente.</span>`}
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button type="button" class="btn btn-primary btn-sm" id="btn-mp-connect" onclick="conectarMP()" style="display:${mpConectado?'none':'inline-flex'}">🔗 Conectar MercadoPago</button>
-        <button type="button" class="btn btn-danger btn-sm" id="btn-mp-disconnect" onclick="desconectarMP()" style="display:${mpConectado?'inline-flex':'none'}">❌ Desconectar</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="sincronizarMP()" style="display:${mpConectado?'inline-flex':'none'}">🔄 Sincronizar ahora</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-mp-connect" onclick="conectarMP()" style="display:${mpConectado?'none':'inline-flex'}">Conectar MercadoPago</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btn-mp-disconnect" onclick="desconectarMP()" style="display:${mpConectado?'inline-flex':'none'}">Desconectar</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="sincronizarMP()" style="display:${mpConectado?'inline-flex':'none'}">Sincronizar ahora</button>
       </div>
     </div>
     <div id="mp-result" style="margin-top:12px"></div>
-  </div>
+  </div>` : '';
+
+  setMain(`
+  <div class="page-header"><div><div class="page-title">Configuración</div><div class="page-subtitle">${esTienda?'Tienda y MercadoPago':'Preferencias de cuenta'}</div></div></div>
+
+  ${tiendaSection}
 
   <div class="card">
-    <h3 style="margin-bottom:12px;font-size:15px">📱 Notificaciones Telegram</h3>
+    <h3 style="margin-bottom:12px;font-size:15px;color:var(--text)">Notificaciones Telegram</h3>
     <div class="info-box" style="font-size:12px">
       Las notificaciones de cuotas por vencer se envían automáticamente cada día a las 9 AM.<br>
       Para configurar Telegram, agregá <strong>TELEGRAM_TOKEN</strong> y <strong>TELEGRAM_CHAT_ID</strong> como variables de entorno en Vercel.
@@ -1211,11 +1618,11 @@ async function renderConfig(){
   // Detectar retorno del OAuth de MP
   const params=new URLSearchParams(window.location.search);
   if(params.get('mp_ok')){
-    document.getElementById('mp-result').innerHTML=`<div class="alert-box" style="background:#f0fff4;border:2px solid #c6f6d5"><div class="alert-title" style="color:#1e8449">✅ MercadoPago conectado correctamente.</div></div>`;
+    document.getElementById('mp-result').innerHTML=`<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">MercadoPago conectado correctamente.</div></div>`;
     history.replaceState({},'',window.location.pathname);
   }
   if(params.get('mp_error')){
-    document.getElementById('mp-result').innerHTML=`<div class="alert-box red"><div class="alert-title red">❌ Error al conectar MP: ${params.get('mp_error')}</div></div>`;
+    document.getElementById('mp-result').innerHTML=`<div class="alert-box red"><div class="alert-title red">Error al conectar MP: ${params.get('mp_error')}</div></div>`;
     history.replaceState({},'',window.location.pathname);
   }
 }
@@ -1229,9 +1636,9 @@ async function saveConfig(e){
       tiendaNombre: document.getElementById('cfg-tienda-nombre').value.trim(),
       vercelDeployHook: document.getElementById('cfg-deploy-hook').value.trim(),
     });
-    el.innerHTML=`<div class="alert-box" style="background:#f0fff4;border:2px solid #c6f6d5"><div class="alert-title" style="color:#1e8449">✅ Configuración guardada</div></div>`;
+    el.innerHTML=`<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">Configuración guardada</div></div>`;
   }catch(e2){
-    el.innerHTML=`<div class="alert-box red"><div class="alert-title red">❌ Error: ${e2.message}</div></div>`;
+    el.innerHTML=`<div class="alert-box red"><div class="alert-title red">Error: ${e2.message}</div></div>`;
   }
 }
 
@@ -1245,7 +1652,7 @@ function openModalCliente(){ document.getElementById('form-cliente').reset(); op
 function openModalVenta(preId){
   document.getElementById('form-venta').reset();
   document.getElementById('venta-id').value='';
-  document.getElementById('modal-venta-title').textContent='➕ Nueva Venta';
+  document.getElementById('modal-venta-title').textContent='Nueva Venta';
   document.getElementById('venta-fecha-compra').value=new Date().toISOString().split('T')[0];
   document.getElementById('venta-cantidad').value=1;
   ['total-venta-display','total-costo-display','adeuda-display'].forEach(id=>{
@@ -1260,7 +1667,7 @@ function openModalVenta(preId){
 function editVenta(id){
   const v=ventas.find(x=>x.id===id); if(!v)return;
   openModalVenta();
-  document.getElementById('modal-venta-title').textContent='✏️ Editar Venta';
+  document.getElementById('modal-venta-title').textContent='Editar Venta';
   document.getElementById('venta-id').value=v.id;
   document.getElementById('venta-cliente').value=v.clienteId;
   document.getElementById('venta-prenda').value=v.prenda;
@@ -1297,7 +1704,7 @@ function calcTotalGasto(){
 function openModalGasto(){
   document.getElementById('form-gasto').reset();
   document.getElementById('gasto-id').value='';
-  document.getElementById('modal-gasto-title').textContent='💸 Nuevo Gasto';
+  document.getElementById('modal-gasto-title').textContent='Nuevo Gasto';
   document.getElementById('gasto-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('gasto-cantidad').value=1;
   document.getElementById('gasto-total-display').textContent='$0.00';
@@ -1307,7 +1714,7 @@ function openModalGasto(){
 function editGasto(id){
   const g=gastos.find(x=>x.id===id); if(!g)return;
   openModalGasto();
-  document.getElementById('modal-gasto-title').textContent='✏️ Editar Gasto';
+  document.getElementById('modal-gasto-title').textContent='Editar Gasto';
   document.getElementById('gasto-id').value=g.id;
   document.getElementById('gasto-descripcion').value=g.descripcion;
   document.getElementById('gasto-cantidad').value=g.cantidad||1;
@@ -1476,22 +1883,22 @@ function renderStock() {
 
   let filas = '';
   if (!activos.length) {
-    filas = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-text">No hay productos. Creá el primero.</div></div></td></tr>`;
+    filas = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div class="empty-state-text">No hay productos. Creá el primero.</div></div></td></tr>`;
   } else {
     filas = activos.map(p => {
       const img = p.imagenUrl
         ? `<img src="${p.imagenUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e9ecef">`
-        : `<div style="width:40px;height:40px;border-radius:6px;background:#f1f3f4;display:flex;align-items:center;justify-content:center;font-size:18px">📷</div>`;
+        : `<div style="width:40px;height:40px;border-radius:6px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
       return `<tr>
         <td data-label="Imagen">${img}</td>
-        <td data-label="Nombre"><strong>${p.nombre}</strong>${p.nuevo?'<span class="badge badge-blue" style="margin-left:6px">Nuevo</span>':''}${p.descripcion?`<br><small style="color:#636e72">${p.descripcion.slice(0,60)}${p.descripcion.length>60?'...':''}</small>`:''}</td>
+        <td data-label="Nombre"><strong>${p.nombre}</strong>${p.nuevo?'<span class="badge badge-blue" style="margin-left:6px">Nuevo</span>':''}${p.descripcion?`<br><small style="color:var(--text-2)">${p.descripcion.slice(0,60)}${p.descripcion.length>60?'...':''}</small>`:''}</td>
         <td data-label="Categoría">${p.categoria?`<span class="badge badge-purple">${p.categoria}</span>`:'—'}</td>
         <td data-label="Precio">${fmt(p.precio)}</td>
         <td data-label="Stock">${stockResumen(p)}</td>
         <td data-label="">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalProducto('${p.id}')">✏️</button>
-          <button class="btn btn-primary btn-sm" onclick="abrirModalVariantes('${p.id}')">🏷️ Variantes</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDeleteProducto('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalProducto('${p.id}')">Editar</button>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalVariantes('${p.id}')">Variantes</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteProducto('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
         </td>
       </tr>`;
     }).join('');
@@ -1499,12 +1906,12 @@ function renderStock() {
 
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">📦 Stock &amp; Tienda Web</div><div class="page-subtitle">Administrá tu inventario y publicalo en la tienda online</div></div>
+    <div><div class="page-title">Stock &amp; Tienda Web</div><div class="page-subtitle">Administrá tu inventario y publicalo en la tienda online</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-success" onclick="abrirModalProducto()">➕ Nuevo Producto</button>
-      <button class="btn btn-primary" onclick="publicarEnTienda()">🌐 Publicar en tienda</button>
-      <button class="btn btn-warning" onclick="sincronizarVentasOnline()">🔄 Sincronizar ventas</button>
-      <button class="btn btn-secondary btn-sm" onclick="abrirConfigStock()" style="align-self:center">⚙️</button>
+      <button class="btn btn-success" onclick="abrirModalProducto()">Nuevo Producto</button>
+      <button class="btn btn-primary" onclick="publicarEnTienda()">Publicar en tienda</button>
+      <button class="btn btn-warning" onclick="sincronizarVentasOnline()">Sincronizar ventas</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirConfigStock()" style="align-self:center">Config</button>
     </div>
   </div>
   <div class="stats-grid" style="margin-bottom:20px">
@@ -1522,9 +1929,9 @@ function renderStock() {
     </div>
   </div>
   <div class="card" style="margin-top:16px" id="stock-config-panel" style="display:none">
-    <h3 style="margin-bottom:10px;font-size:15px">⚙️ Integración tienda</h3>
-    <div style="font-size:13px;color:#636e72">
-      Configurá el Deploy Hook y MercadoPago en <a href="#" onclick="showPage('config');return false">⚙️ Configuración</a>.
+    <h3 style="margin-bottom:10px;font-size:15px">Integración tienda</h3>
+    <div style="font-size:13px;color:var(--text-2)">
+      Configurá el Deploy Hook y MercadoPago en <a href="#" onclick="showPage('config');return false">Configuración</a>.
     </div>
   </div>`);
 }
@@ -1552,10 +1959,10 @@ async function sincronizarMP() {
   el.innerHTML = '<span class="spinner"></span> Sincronizando...';
   try {
     const r = await api('POST', '/api/mp/sync');
-    el.innerHTML = `<div class="alert-box" style="background:#f0fff4;border:2px solid #c6f6d5"><div class="alert-title" style="color:#1e8449">✅ ${r.message}</div></div>`;
+    el.innerHTML = `<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">${r.message}</div></div>`;
     if (r.synced > 0) loadAll();
   } catch (e) {
-    el.innerHTML = `<div class="alert-box red"><div class="alert-title red">❌ Error: ${e.message}</div></div>`;
+    el.innerHTML = `<div class="alert-box red"><div class="alert-title red">Error: ${e.message}</div></div>`;
   }
 }
 
@@ -1563,14 +1970,14 @@ async function sincronizarMP() {
 function abrirModalProducto(id = null) {
   document.getElementById('form-producto').reset();
   document.getElementById('producto-id').value = '';
-  document.getElementById('modal-producto-title').textContent = '📦 Nuevo Producto';
+  document.getElementById('modal-producto-title').textContent = 'Nuevo Producto';
   document.getElementById('prod-nuevo').checked = false;
   resetImageState();
 
   if (id) {
     const p = productos.find(x => x.id === id);
     if (p) {
-      document.getElementById('modal-producto-title').textContent = '✏️ Editar Producto';
+      document.getElementById('modal-producto-title').textContent = 'Editar Producto';
       document.getElementById('producto-id').value = p.id;
       document.getElementById('prod-nombre').value = p.nombre || '';
       document.getElementById('prod-categoria').value = p.categoria || '';
@@ -1618,7 +2025,7 @@ async function submitProducto(e) {
     // Subir fotos nuevas si hay
     let finalImages = [...prodExistingImages];
     if (prodNewFiles.length > 0) {
-      btn.innerHTML = '⬆️ Subiendo fotos...';
+      btn.innerHTML = 'Subiendo...';
       const images = await Promise.all(prodNewFiles.map(f =>
         new Promise((res, rej) => {
           const reader = new FileReader();
@@ -1640,7 +2047,7 @@ async function submitProducto(e) {
     alert('Error: ' + err.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '💾 Guardar';
+    btn.innerHTML = 'Guardar';
   }
 }
 
@@ -1679,7 +2086,7 @@ function renderVariantesList() {
   if (!variantesCache.length) {
     el.innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-state-text">Sin variantes. Agregá un color arriba, o si no tiene colores, usá el botón "Talle sin color" abajo.</div></div>
     <div style="margin-top:12px">
-      <div style="font-size:11px;font-weight:700;color:#636e72;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">📏 Talle sin color</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Talle sin color</div>
       <div style="display:flex;gap:6px;align-items:center">
         <input type="text" id="nt-general" class="form-input" placeholder="Talle (S, M, L...)" style="font-size:12px;max-width:110px">
         <input type="number" id="nc-general" class="form-input" placeholder="0" min="0" style="font-size:12px;max-width:70px" value="0">
@@ -1696,23 +2103,23 @@ function renderVariantesList() {
     const cvTalles = talleVars.filter(tv => tv.colorId === cv.id);
     html += `<div style="border:1px solid #e9ecef;border-radius:10px;padding:14px;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-weight:700;font-size:14px">🎨 ${cv.nombre}</div>
-        <button class="btn btn-danger btn-sm" onclick="eliminarVariante('${cv.id}')">🗑️</button>
+        <div style="font-weight:700;font-size:14px">${cv.nombre}</div>
+        <button class="btn btn-danger btn-sm" onclick="eliminarVariante('${cv.id}')">Eliminar</button>
       </div>
       <div style="margin-bottom:10px">
         <label class="form-label" style="margin-bottom:4px">URL de imagen</label>
         <input type="text" class="form-input" style="font-size:12px" value="${(cv.imagen||'').replace(/"/g,'&quot;')}" placeholder="https://..." onchange="actualizarImagenColor('${cv.id}', this.value)">
       </div>
-      <div style="font-size:11px;font-weight:700;color:#636e72;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">TALLES</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">TALLES</div>
       ${cvTalles.length === 0 ? '<div style="color:#aaa;font-size:12px;margin-bottom:8px">Sin talles para este color</div>' : ''}
       ${cvTalles.map(tv => {
         const cant = parseInt(tv.cantidad)||0;
         const badge = cant===0?'badge-red':cant<=2?'badge-orange':'badge-green';
-        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:#f8f9fa;border-radius:8px">
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:var(--surface-2);border-radius:6px">
           <span style="flex:1;font-weight:600;font-size:13px">${tv.nombre}</span>
           <span class="badge ${badge}">${cant} uds</span>
-          <input type="number" min="0" style="width:72px;padding:4px 8px;border:2px solid #e9ecef;border-radius:6px;font-size:13px;text-align:center" value="${cant}" onchange="actualizarVariante('${tv.id}', this.value)">
-          <button class="btn btn-danger btn-sm" onclick="eliminarVariante('${tv.id}')">🗑️</button>
+          <input type="number" min="0" style="width:72px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;text-align:center;background:var(--surface);color:var(--text)" value="${cant}" onchange="actualizarVariante('${tv.id}', this.value)">
+          <button class="btn btn-danger btn-sm" onclick="eliminarVariante('${tv.id}')">Eliminar</button>
         </div>`;
       }).join('')}
       <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
@@ -1727,15 +2134,15 @@ function renderVariantesList() {
   const standaloneTalles = talleVars.filter(tv => !tv.colorId || tv.colorId === '');
   if (standaloneTalles.length > 0 || colorVars.length === 0) {
     html += `<div style="border:1px solid #e9ecef;border-radius:10px;padding:14px;margin-bottom:12px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px">📏 Talles sin color</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">Talles sin color</div>
       ${standaloneTalles.map(tv => {
         const cant = parseInt(tv.cantidad)||0;
         const badge = cant===0?'badge-red':cant<=2?'badge-orange':'badge-green';
-        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:#f8f9fa;border-radius:8px">
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:var(--surface-2);border-radius:6px">
           <span style="flex:1;font-weight:600;font-size:13px">${tv.nombre}</span>
           <span class="badge ${badge}">${cant} uds</span>
-          <input type="number" min="0" style="width:72px;padding:4px 8px;border:2px solid #e9ecef;border-radius:6px;font-size:13px;text-align:center" value="${cant}" onchange="actualizarVariante('${tv.id}', this.value)">
-          <button class="btn btn-danger btn-sm" onclick="eliminarVariante('${tv.id}')">🗑️</button>
+          <input type="number" min="0" style="width:72px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;text-align:center;background:var(--surface);color:var(--text)" value="${cant}" onchange="actualizarVariante('${tv.id}', this.value)">
+          <button class="btn btn-danger btn-sm" onclick="eliminarVariante('${tv.id}')">Eliminar</button>
         </div>`;
       }).join('')}
       <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
@@ -1848,15 +2255,15 @@ async function publicarEnTienda() {
   try {
     const r = await api('POST', '/api/stock/publicar', {});
     if (r.ok) {
-      el.innerHTML = `<div class="alert-box" style="background:#f0fff4;border:2px solid #c6f6d5">
-        <div class="alert-title" style="color:#1e8449">${r.deployed ? '✅ Publicado en Vercel' : '⚠️ Archivos generados (deploy manual requerido)'}</div>
-        <div style="font-size:12px;color:#636e72;margin-top:6px">${r.message}</div>
+      el.innerHTML = `<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)">
+        <div class="alert-title" style="color:#5CB870">${r.deployed ? 'Publicado en Vercel' : 'Archivos generados (deploy manual requerido)'}</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:6px">${r.message}</div>
       </div>`;
     } else {
-      el.innerHTML = `<div class="alert-box red"><div class="alert-title red">❌ Error: ${r.message}</div></div>`;
+      el.innerHTML = `<div class="alert-box red"><div class="alert-title red">Error: ${r.message}</div></div>`;
     }
   } catch (err) {
-    el.innerHTML = `<div class="alert-box red"><div class="alert-title red">❌ Error: ${err.message}</div><div style="font-size:12px;color:#636e72;margin-top:4px">Verificá que el Vercel Deploy Hook esté configurado en ⚙️ Configuración.</div></div>`;
+    el.innerHTML = `<div class="alert-box red"><div class="alert-title red">Error: ${err.message}</div><div style="font-size:12px;color:var(--text-2);margin-top:4px">Verificá que el Vercel Deploy Hook esté configurado en Configuración.</div></div>`;
   }
 }
 
@@ -1869,17 +2276,17 @@ async function sincronizarVentasOnline() {
     const r = await api('POST', '/api/sync-mp');
     const lista = document.getElementById('ventas-online-lista');
     if (r.nuevas === 0) {
-      lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Todo al día. No hay ventas nuevas desde la última sincronización.</div></div>`;
+      lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M20 6 9 17l-5-5"/></svg></div><div class="empty-state-text">Todo al día. No hay ventas nuevas desde la última sincronización.</div></div>`;
     } else {
-      let html = `<div class="alert-box" style="background:#f0fff4;border:2px solid #c6f6d5;margin-bottom:12px">
-        <div class="alert-title" style="color:#1e8449">✅ ${r.nuevas} venta${r.nuevas!==1?'s':''} nueva${r.nuevas!==1?'s':''} encontrada${r.nuevas!==1?'s':''} — stock descontado automáticamente.</div>
+      let html = `<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3);margin-bottom:12px">
+        <div class="alert-title" style="color:#5CB870">${r.nuevas} venta${r.nuevas!==1?'s':''} nueva${r.nuevas!==1?'s':''} encontrada${r.nuevas!==1?'s':''} — stock descontado automáticamente.</div>
       </div>`;
       if (r.detalle && r.detalle.length) {
         html += `<div style="display:grid;gap:8px">`;
         for (const v of r.detalle) {
-          html += `<div style="background:#f8f9fa;border-radius:8px;padding:10px 14px;font-size:13px">
+          html += `<div style="background:var(--surface-2);border-radius:6px;padding:10px 14px;font-size:13px">
             <div style="font-weight:700">Pago #${v.paymentId}</div>
-            <div style="color:#636e72;margin-top:3px">Ref: ${v.externalRef || '—'} · ${v.fecha ? new Date(v.fecha).toLocaleDateString('es-AR') : '—'}</div>
+            <div style="color:var(--text-2);margin-top:3px">Ref: ${v.externalRef || '—'} · ${v.fecha ? new Date(v.fecha).toLocaleDateString('es-AR') : '—'}</div>
           </div>`;
         }
         html += '</div>';
@@ -1889,7 +2296,7 @@ async function sincronizarVentasOnline() {
     }
   } catch (err) {
     document.getElementById('ventas-online-lista').innerHTML =
-      `<div class="alert-box red"><div class="alert-title red">❌ Error: ${err.message}</div><div style="font-size:12px;color:#636e72;margin-top:6px">Verificá que el Token de MercadoPago esté configurado en ⚙️</div></div>`;
+      `<div class="alert-box red"><div class="alert-title red">Error: ${err.message}</div><div style="font-size:12px;color:var(--text-2);margin-top:6px">Verificá que el Token de MercadoPago esté configurado en Configuración.</div></div>`;
   }
 }
 
@@ -1902,13 +2309,262 @@ async function procesarVentasOnline() {
   try {
     const r = await api('POST', '/api/ventas-online/procesar', { ids });
     document.getElementById('ventas-online-lista').innerHTML =
-      `<div class="alert-box" style="background:#f0fff4;border:2px solid #c6f6d5"><div class="alert-title" style="color:#1e8449">✅ ${r.procesadas} venta${r.procesadas!==1?'s':''} procesada${r.procesadas!==1?'s':''} y stock descontado.</div></div>`;
+      `<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">${r.procesadas} venta${r.procesadas!==1?'s':''} procesada${r.procesadas!==1?'s':''} y stock descontado.</div></div>`;
     btn.style.display = 'none';
     await loadAll();
   } catch (err) {
     alert('Error al procesar: ' + err.message);
     btn.disabled = false;
-    btn.innerHTML = '✅ Procesar todas y descontar stock';
+    btn.innerHTML = 'Procesar todas y descontar stock';
+  }
+}
+
+// ─── STOCK SIN TIENDA ─────────────────────────────────────────────────────────
+function renderStockSinTienda() {
+  setMain(`
+  <div class="page-header">
+    <div><div class="page-title">Stock</div><div class="page-subtitle">Inventario de productos</div></div>
+    <button class="btn btn-success" onclick="abrirModalProducto()">+ Nuevo Producto</button>
+  </div>
+  ${renderStockTable()}`);
+}
+
+function renderStockTable() {
+  const activos = productos.filter(p => p.activo !== 0);
+  if (!activos.length) return `<div class="empty-state"><div class="empty-state-text">No hay productos. Creá el primero.</div></div>`;
+  const filas = activos.map(p => {
+    const img = p.imagenUrl
+      ? `<img src="${p.imagenUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">`
+      : `<div style="width:36px;height:36px;border-radius:5px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-3)">◻</div>`;
+    return `<tr>
+      <td>${img}</td>
+      <td><strong>${p.nombre}</strong>${p.nuevo?'<span class="badge badge-blue" style="margin-left:6px">Nuevo</span>':''}</td>
+      <td>${p.categoria?`<span class="badge badge-purple">${p.categoria}</span>`:'—'}</td>
+      <td>${fmt(p.precio)}</td>
+      <td>${stockResumen(p)}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalProducto('${p.id}')">Editar</button>
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalVariantes('${p.id}')">Variantes</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteProducto('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join('');
+  return `<div class="card"><div class="table-container"><table class="table-responsive">
+    <thead><tr><th></th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+    <tbody>${filas}</tbody>
+  </table></div></div>`;
+}
+
+// ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
+async function renderAdminDashboard() {
+  try {
+    const stats = await api('GET', '/api/admin/stats');
+    setMain(`
+    <div class="page-header">
+      <div><div class="page-title">Dashboard global</div><div class="page-subtitle">Métricas de toda la plataforma</div></div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+      <div class="stat-card"><div class="stat-label">Usuarios registrados</div><div class="stat-value blue">${stats.totalUsuarios||0}</div></div>
+      <div class="stat-card"><div class="stat-label">Activos este mes</div><div class="stat-value green">${stats.activosMes||0}</div></div>
+      <div class="stat-card"><div class="stat-label">Facturado este mes</div><div class="stat-value">${fmt(stats.facturadoMes||0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Ventas online mes</div><div class="stat-value">${fmt(stats.ventasOnlineMes||0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Cuentas con tienda</div><div class="stat-value">${stats.cuentasConTienda||0}</div></div>
+      <div class="stat-card"><div class="stat-label">MP conectados</div><div class="stat-value">${stats.mpConectados||0}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:14px;font-size:14px;font-weight:500">Actividad reciente</h3>
+      <div id="admin-actividad-preview">
+        ${(stats.actividadReciente||[]).map(a=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-2)">· ${a.accion}${a.detalle?' — '+a.detalle:''} <span style="color:var(--text-3);margin-left:8px;font-size:11px">${new Date(a.created_at).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div>`).join('')||'<div style="color:var(--text-3);font-size:13px">Sin actividad reciente</div>'}
+      </div>
+    </div>
+    `);
+  } catch(e) {
+    setMain(`<div class="empty-state"><div class="empty-state-text">Error cargando dashboard: ${e.message}</div></div>`);
+  }
+}
+
+async function renderAdminUsuarios() {
+  try {
+    const usuarios = await api('GET', '/api/admin/usuarios');
+    const rows = usuarios.map(u => `
+      <tr>
+        <td><strong>${u.nombre||'—'}</strong></td>
+        <td style="color:var(--text-2)">${u.email}</td>
+        <td><span class="badge ${u.tipoCuenta==='gestion_tienda'?'badge-blue':'badge-purple'}">${u.tipoCuenta||'gestion'}</span></td>
+        <td><span class="badge ${u.mpConectado?'badge-green':'badge-orange'}">${u.mpConectado?'Sí':'No'}</span></td>
+        <td style="color:var(--text-2);font-size:12px">${u.ultimoAcceso?new Date(u.ultimoAcceso).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Nunca'}</td>
+        <td><span class="badge ${u.activo?'badge-green':'badge-red'}">${u.activo?'Activo':'Inactivo'}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="impersonarUsuario('${u.id}','${(u.nombre||u.email).replace(/'/g,"\\'")}')">Ver</button>
+          <button class="btn ${u.activo?'btn-danger':'btn-success'} btn-sm" onclick="toggleUsuario('${u.id}',${!u.activo})">${u.activo?'Desactivar':'Activar'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetPassword('${u.id}')">Reset pwd</button>
+        </td>
+      </tr>`).join('');
+
+    setMain(`
+    <div class="page-header">
+      <div><div class="page-title">Usuarios</div><div class="page-subtitle">${usuarios.length} usuarios registrados</div></div>
+      <button class="btn btn-primary" onclick="openModalCrearUsuario()">+ Nuevo usuario</button>
+    </div>
+    <div class="card">
+      <div class="search-box"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span><input type="text" id="search-admin-usuarios" placeholder="Buscar por nombre o email..." oninput="filterAdminUsuarios()" style="padding-left:34px" autocomplete="off"></div>
+      <div class="table-container"><table id="admin-usuarios-table" class="table-responsive">
+        <thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th>MP</th><th>Último acceso</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="admin-usuarios-tbody">${rows}</tbody>
+      </table></div>
+    </div>
+    `);
+
+    window._adminUsuarios = usuarios;
+  } catch(e) {
+    setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`);
+  }
+}
+
+function filterAdminUsuarios() {
+  const q = (document.getElementById('search-admin-usuarios')?.value||'').toLowerCase();
+  const filas = document.querySelectorAll('#admin-usuarios-tbody tr');
+  filas.forEach(tr => {
+    const texto = tr.textContent.toLowerCase();
+    tr.style.display = texto.includes(q) ? '' : 'none';
+  });
+}
+
+async function toggleUsuario(id, activar) {
+  try {
+    await api('POST', `/api/admin/usuarios/${id}/${activar?'activar':'desactivar'}`);
+    await renderAdminUsuarios();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function resetPassword(id) {
+  if (!confirm('¿Enviar email de reset de contraseña a este usuario?')) return;
+  try {
+    await api('POST', `/api/admin/usuarios/${id}/reset-password`);
+    alert('Email de reset enviado.');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function openModalCrearUsuario() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.innerHTML = `<div class="modal">
+    <div class="modal-title">Nuevo usuario</div>
+    <form onsubmit="crearUsuarioAdmin(event)">
+      <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="nu-nombre" required></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="nu-email" required></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="nu-pass" required minlength="8"></div>
+      <div class="form-group"><label class="form-label">Tipo de cuenta</label>
+        <select class="form-input" id="nu-tipo"><option value="gestion">Solo Gestión</option><option value="gestion_tienda">Gestión + Tienda</option></select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Crear usuario</button>
+      </div>
+    </form>
+  </div>`;
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function crearUsuarioAdmin(e) {
+  e.preventDefault();
+  try {
+    await api('POST', '/api/admin/usuarios/crear', {
+      nombre: document.getElementById('nu-nombre').value.trim(),
+      email: document.getElementById('nu-email').value.trim(),
+      password: document.getElementById('nu-pass').value,
+      tipoCuenta: document.getElementById('nu-tipo').value,
+    });
+    document.querySelector('.modal-overlay .modal')?.closest('.modal-overlay')?.remove();
+    await renderAdminUsuarios();
+  } catch(err) { alert('Error: ' + err.message); }
+}
+
+async function renderAdminVentas() {
+  try {
+    const ventas = await api('GET', '/api/admin/ventas-globales');
+    const rows = ventas.slice(0,100).map(v=>`<tr>
+      <td style="color:var(--text-2);font-size:12px">${v.cuenta||'—'}</td>
+      <td>${v.external_ref||'—'}</td>
+      <td>${v.comprador||'—'}</td>
+      <td>${fmt(v.monto||0)}</td>
+      <td style="font-size:12px;color:var(--text-2)">${v.created_at?new Date(v.created_at).toLocaleDateString('es-AR'):'—'}</td>
+      <td><span class="badge badge-green">${v.estado||'aprobada'}</span></td>
+    </tr>`).join('');
+    setMain(`
+    <div class="page-header"><div><div class="page-title">Ventas globales</div><div class="page-subtitle">${ventas.length} ventas online en la plataforma</div></div></div>
+    <div class="card"><div class="table-container"><table class="table-responsive">
+      <thead><tr><th>Cuenta</th><th>Referencia</th><th>Comprador</th><th>Monto</th><th>Fecha</th><th>Estado</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:var(--text-3)">Sin ventas online</td></tr>'}</tbody>
+    </table></div></div>`);
+  } catch(e) { setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`); }
+}
+
+async function renderAdminActividad() {
+  try {
+    const logs = await api('GET', '/api/admin/actividad');
+    const rows = logs.map(a=>`<tr>
+      <td style="font-size:12px;color:var(--text-2)">${new Date(a.created_at).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
+      <td style="color:var(--text-2);font-size:12px">${a.email||'—'}</td>
+      <td>${a.accion}</td>
+      <td style="color:var(--text-2);font-size:12px">${a.detalle||'—'}</td>
+    </tr>`).join('');
+    setMain(`
+    <div class="page-header"><div><div class="page-title">Actividad</div><div class="page-subtitle">Últimas acciones en la plataforma</div></div></div>
+    <div class="card"><div class="table-container"><table>
+      <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--text-3)">Sin actividad</td></tr>'}</tbody>
+    </table></div></div>`);
+  } catch(e) { setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`); }
+}
+
+async function renderAdminConfig() {
+  try {
+    const cfg = await api('GET', '/api/admin/config');
+    const registrosHabilitados = cfg.registros_habilitados !== 'false';
+    const emailSoporte = cfg.email_soporte || '';
+    const bienvenida = cfg.mensaje_bienvenida || '';
+    setMain(`
+    <div class="page-header"><div><div class="page-title">Configuración del sistema</div><div class="page-subtitle">Settings globales de la plataforma</div></div></div>
+    <div class="card" style="max-width:600px">
+      <form onsubmit="saveAdminConfig(event)">
+        <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Permitir nuevos registros</div>
+            <div style="font-size:12px;color:var(--text-2);margin-top:2px">Si está desactivado, el botón "Crear cuenta" no aparece</div>
+          </div>
+          <input type="checkbox" id="admin-cfg-registros" ${registrosHabilitados?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label class="form-label">Email de soporte</label>
+          <input type="email" class="form-input" id="admin-cfg-email" value="${emailSoporte}" placeholder="soporte@miapp.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensaje de bienvenida</label>
+          <textarea class="form-input" id="admin-cfg-bienvenida" rows="3" placeholder="Bienvenido a la plataforma...">${bienvenida}</textarea>
+        </div>
+        <div class="form-actions" style="justify-content:flex-start">
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+        <div id="admin-cfg-result" style="margin-top:10px"></div>
+      </form>
+    </div>`);
+  } catch(e) { setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`); }
+}
+
+async function saveAdminConfig(e) {
+  e.preventDefault();
+  const el = document.getElementById('admin-cfg-result');
+  try {
+    await api('POST', '/api/admin/config', {
+      registros_habilitados: document.getElementById('admin-cfg-registros').checked ? 'true' : 'false',
+      email_soporte: document.getElementById('admin-cfg-email').value.trim(),
+      mensaje_bienvenida: document.getElementById('admin-cfg-bienvenida').value.trim(),
+    });
+    el.innerHTML = `<div class="alert-box" style="background:rgba(58,125,68,.1);border-color:rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">Configuración guardada</div></div>`;
+  } catch(err) {
+    el.innerHTML = `<div class="alert-box red"><div class="alert-title red">Error: ${err.message}</div></div>`;
   }
 }
 
@@ -1917,20 +2573,23 @@ async function procesarVentasOnline() {
   const authed = await initAuth();
   if (!authed) return;
   hideAuthOverlay();
-  await loadAll();
-  showPage('dashboard');
-
-  // Auto-sync MP cada 5 minutos silenciosamente
-  async function autoSyncMP() {
-    try {
-      const r = await api('POST', '/api/sync-mp');
-      if (r.nuevas > 0) {
-        await loadAll();
-        if (['stock','clientes','dashboard'].includes(currentPage)) showPage(currentPage);
-      }
-    } catch {}
+  if (_currentUser?.rol === 'admin') {
+    showPage('admin-dashboard');
+  } else {
+    await loadAll();
+    showPage('dashboard');
+    // Auto-sync MP cada 5 minutos silenciosamente
+    async function autoSyncMP() {
+      try {
+        const r = await api('POST', '/api/mp/sync');
+        if (r.nuevas > 0) {
+          await loadAll();
+          if (['stock','clientes','dashboard'].includes(currentPage)) showPage(currentPage);
+        }
+      } catch {}
+    }
+    setInterval(autoSyncMP, 5 * 60 * 1000);
   }
-  setInterval(autoSyncMP, 5 * 60 * 1000);
 })();
 </script>
 </body>
