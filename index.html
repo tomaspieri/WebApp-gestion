@@ -199,6 +199,36 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 .reg-section-sep{display:flex;align-items:center;gap:10px;margin:16px 0}
 .reg-section-sep::before,.reg-section-sep::after{content:'';flex:1;border-top:1px solid var(--border)}
 .reg-section-sep span{font-size:11px;color:var(--text-3)}
+/* ── CUENTA CORRIENTE ── */
+.cc-entry{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.cc-entry:last-child{border-bottom:none}
+.cc-entry-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600}
+.cc-entry-icon.compra{background:rgba(168,134,113,.12);color:var(--accent)}
+.cc-entry-icon.pago{background:rgba(58,125,68,.12);color:var(--success)}
+.cc-entry-detail{flex:1;min-width:0}
+.cc-entry-label{font-size:13px;color:var(--text);font-weight:500}
+.cc-entry-sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.cc-entry-amount{font-size:14px;font-weight:600;text-align:right;flex-shrink:0}
+.cc-entry-amount.pos{color:var(--danger)}
+.cc-entry-amount.neg{color:var(--success)}
+/* ── BARRA META ── */
+.meta-bar-wrap{margin-top:16px;margin-bottom:20px}
+.meta-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);margin-bottom:6px}
+.meta-bar-track{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.meta-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+/* ── BÚSQUEDA GLOBAL ── */
+.search-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:10vh}
+.search-overlay.open{display:flex}
+.search-overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:560px;max-width:95vw;overflow:hidden}
+.search-overlay-input{width:100%;padding:14px 16px;border:none;border-bottom:1px solid var(--border);font-size:15px;background:transparent;color:var(--text);outline:none;font-family:inherit}
+.search-overlay-input::placeholder{color:var(--text-3)}
+.search-overlay-results{max-height:380px;overflow-y:auto}
+.search-result-group{padding:8px 12px 4px;font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em}
+.search-result-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:background .1s}
+.search-result-item:hover{background:var(--surface-2)}
+.search-result-item-title{font-size:13px;color:var(--text);flex:1}
+.search-result-item-sub{font-size:12px;color:var(--text-2)}
+.search-no-results{padding:24px 16px;text-align:center;font-size:13px;color:var(--text-3)}
 /* ── TOGGLE SWITCH ── */
 .toggle-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
 .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
@@ -384,10 +414,13 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 <div class="sidebar" id="sidebar">
   <div class="sidebar-logo" id="sidebar-logo">CHANA<span>Gestión de Ventas</span></div>
   <nav id="sidebar-nav"></nav>
-  <div style="padding:8px 16px;border-top:1px solid var(--border)">
-    <button id="btn-ocultar" onclick="toggleOcultar()" style="width:100%;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;transition:all .15s">
+  <div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:6px">
+    <button id="btn-ocultar" onclick="toggleOcultar()" style="flex:1;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;transition:all .15s">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Ocultar valores
+      Ocultar
+    </button>
+    <button onclick="openSearch()" title="Buscar (Ctrl+K)" style="background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;transition:all .15s;display:flex;align-items:center" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-2)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </button>
   </div>
   <div id="user-badge-container" style="display:none">
@@ -555,13 +588,12 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       <div class="form-group">
         <label class="form-label">Categoría</label>
         <select class="form-input" id="gasto-categoria">
-          <option value="">Sin categoría</option>
-          <option value="Mercadería">Mercadería / Stock</option>
-          <option value="Transporte">Transporte / Flete</option>
-          <option value="Bolsas y embalaje">Bolsas y embalaje</option>
-          <option value="Publicidad">Publicidad / Redes</option>
-          <option value="Servicios">Servicios (internet, etc.)</option>
-          <option value="Otros">Otros</option>
+          <option value="otros">Otros</option>
+          <option value="indumentaria">Indumentaria / Stock</option>
+          <option value="envios">Envíos / Flete</option>
+          <option value="marketing">Marketing / Publicidad</option>
+          <option value="servicios">Servicios</option>
+          <option value="impuestos">Impuestos / Tasas</option>
         </select>
       </div>
       <div class="form-group">
@@ -717,6 +749,119 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
         style="background:#8B2020;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s"
         onmouseover="this.style.background='#7A1A1A'" onmouseout="this.style.background='#8B2020'">Cerrar sesión</button>
     </div>
+  </div>
+</div>
+
+<!-- Búsqueda Global -->
+<div class="search-overlay" id="search-overlay" onclick="if(event.target===this)closeSearch()">
+  <div class="search-overlay-box">
+    <input class="search-overlay-input" id="search-global-input" type="text" placeholder="Buscar clientes, ventas, gastos..." oninput="runSearch()" autocomplete="off">
+    <div class="search-overlay-results" id="search-global-results">
+      <div class="search-no-results">Escribí para buscar...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registrar Pago -->
+<div class="modal-overlay" id="modal-pago" onclick="if(event.target===this)closeModal('modal-pago')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">Registrar pago</div>
+    <div id="modal-pago-cliente-nombre" style="font-size:13px;color:var(--text-2);margin-top:-12px;margin-bottom:16px"></div>
+    <form onsubmit="submitPago(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Monto pagado *</label>
+          <input type="number" class="form-input" id="pago-monto" min="1" step="0.01" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" class="form-input" id="pago-fecha">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Medio de pago</label>
+        <select class="form-input" id="pago-medio">
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nota (opcional)</label>
+        <input type="text" class="form-input" id="pago-nota" placeholder="Ej: cuota de junio" maxlength="200">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pago')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-submit-pago">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Venta Rápida -->
+<div class="modal-overlay" id="modal-venta-rapida" onclick="if(event.target===this)closeModal('modal-venta-rapida')">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">Venta rápida</div>
+    <form onsubmit="submitVentaRapida(event)">
+      <div class="form-group">
+        <label class="form-label">Cliente *</label>
+        <input type="text" class="form-input" id="vr-cliente-search" placeholder="Buscar cliente por nombre..." oninput="filtrarClientesVR()" autocomplete="off">
+        <div id="vr-cliente-list" style="margin-top:4px;max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;display:none"></div>
+        <input type="hidden" id="vr-cliente-id">
+        <div id="vr-cliente-selected" style="margin-top:6px;font-size:12px;color:var(--accent);display:none"></div>
+      </div>
+      <div id="vr-items">
+        <div class="vr-item" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:8px">
+              <label class="form-label">Prenda</label>
+              <input type="text" class="form-input vr-prenda" placeholder="Ej: Vestido negro" required>
+            </div>
+            <div class="form-group" style="margin-bottom:8px">
+              <label class="form-label">Precio venta</label>
+              <input type="number" class="form-input vr-precio" placeholder="0" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Costo (opcional)</label>
+              <input type="number" class="form-input vr-costo" placeholder="0" min="0" step="0.01">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Cantidad</label>
+              <input type="number" class="form-input vr-cantidad" value="1" min="1">
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="vrAgregarItem()" style="margin-bottom:14px">+ Agregar otra prenda</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <label class="toggle-switch"><input type="checkbox" id="vr-pago-toggle" onchange="vrTogglePago()"><span class="toggle-slider"></span></label>
+        <span style="font-size:13px;color:var(--text)">¿Realizó un pago ahora?</span>
+      </div>
+      <div id="vr-pago-section" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Monto pagado</label>
+            <input type="number" class="form-input" id="vr-pago-monto" placeholder="0" min="0" step="0.01">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Medio de pago</label>
+            <select class="form-input" id="vr-pago-medio">
+              <option value="efectivo">Efectivo</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-venta-rapida')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-submit-vr">Confirmar venta</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1129,9 +1274,9 @@ async function loadAll() {
   ];
   if (tipoCuenta === 'gestion_tienda') promises.push(api('GET', '/api/productos'));
   const results = await Promise.all(promises);
-  clientes = results[0];
-  ventas   = results[1];
-  gastos   = results[2];
+  clientes  = results[0];
+  ventas    = results[1];
+  gastos    = results[2];
   productos = results[3] || [];
 }
 
@@ -1217,7 +1362,7 @@ async function showPage(page,extra){
   await loadAll();
   if      (page==='dashboard')       renderDashboard();
   else if (page==='clientes')        renderClientes();
-  else if (page==='cliente-detalle') { if(extra)currentClienteId=extra; renderClienteDetalle(); }
+  else if (page==='cliente-detalle') { if(extra)currentClienteId=extra; await renderClienteDetalle(); }
   else if (page==='ventas')          renderVentas();
   else if (page==='meses')           renderMeses();
   else if (page==='deudas')          renderDeudas();
@@ -1249,6 +1394,16 @@ function renderDashboard(){
   const totalGastos=gastos.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
   const ganNeta=totalVtas-totalGastos;
 
+  // Stock mínimo
+  const stockBajo = productos.flatMap(p=>p.variantes||[]).filter(v=>v.stockMinimo>0&&v.cantidad<=v.stockMinimo);
+
+  // Meta mensual
+  const meta = _currentUser?.metaMensual;
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+  const ventasMes = ventas.filter(v=>v.fechaCompra&&v.fechaCompra.startsWith(mesActual));
+  const totalMes = ventasMes.reduce((s,v)=>s+(parseFloat(v.precioVenta)||0),0);
+
   let alerts='';
   if(vencidas.length) alerts+=alertHTML('red','Cuotas Vencidas',vencidas);
   if(proximas.length) alerts+=alertHTML('yellow','Cuotas esta semana',proximas);
@@ -1271,15 +1426,33 @@ function renderDashboard(){
   }
   const cntYear=ventas.filter(v=>v.fechaCompra&&v.fechaCompra.startsWith(String(currentYear))).length;
 
+  const stockAlerta = stockBajo.length ? `<div class="alert-box yellow" style="margin-bottom:14px">
+    <div class="alert-title"><span>Stock bajo</span><span class="alert-title-badge yellow">${stockBajo.length}</span></div>
+    ${stockBajo.slice(0,5).map(v=>`<div class="alert-item"><span>${v.nombre}</span><span>quedan ${v.cantidad} unid.</span></div>`).join('')}
+  </div>` : '';
+
+  const metaBar = meta ? (() => {
+    const pct = Math.min(Math.round((totalMes/meta)*100),100);
+    return `<div class="meta-bar-wrap">
+      <div class="meta-bar-label"><span>Meta del mes: ${fmt(meta)}</span><span>Vendido: ${fmt(totalMes)} (${pct}%)</span></div>
+      <div class="meta-bar-track"><div class="meta-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  })() : '';
+
   setMain(`
   <div class="page-header">
     <div><div class="page-title">Dashboard</div><div class="page-subtitle">Resumen general del emprendimiento</div></div>
-    <div class="year-selector">
-      <button class="year-btn" onclick="changeYear(-1)">◀</button>
-      <div class="year-display">${currentYear}</div>
-      <button class="year-btn" onclick="changeYear(1)">▶</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="year-selector">
+        <button class="year-btn" onclick="changeYear(-1)">◀</button>
+        <div class="year-display">${currentYear}</div>
+        <button class="year-btn" onclick="changeYear(1)">▶</button>
+      </div>
+      <button class="btn btn-primary" onclick="openVentaRapida()">+ Venta rápida</button>
     </div>
   </div>
+  ${metaBar}
+  ${stockAlerta}
   <div class="stats-grid" style="margin-bottom:20px">
     <div class="stat-card">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Clientes</div>
@@ -1359,31 +1532,37 @@ function filterClientes(){
 // ─── DEUDAS ───────────────────────────────────────────────────────────────────
 let deudaOrden='mayor';
 
+function diasSinPagar(vs) {
+  const fechas = vs.map(v=>v.fechaCompra||'').filter(Boolean).sort();
+  const ref = fechas[0] || '';
+  if (!ref) return null;
+  return Math.floor((Date.now() - new Date(ref).getTime()) / 86400000);
+}
+
 function renderDeudas(){
   const conDeuda=clientes.map(c=>{
     const vs=ventasByCliente(c.id).filter(v=>(parseFloat(v.adeuda)||0)>0);
     if(!vs.length) return null;
     const totalAdeuda=vs.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
-    const ultimaFecha=vs.map(v=>v.fechaCompra||'').sort().reverse()[0]||'';
+    const ultimaFecha=vs.map(v=>v.fechaCompra||'').filter(Boolean).sort().reverse()[0]||'';
     const proxCuota=vs.map(v=>v.proxCuota||'').filter(Boolean).sort()[0]||'';
-    return {c, vs, totalAdeuda, ultimaFecha, proxCuota};
+    const dias=diasSinPagar(vs);
+    return {c, vs, totalAdeuda, ultimaFecha, proxCuota, dias};
   }).filter(Boolean);
 
   const total=conDeuda.reduce((s,d)=>s+d.totalAdeuda,0);
 
   setMain(`
   <div class="page-header">
-    <div><div class="page-title">Deudas</div><div class="page-subtitle">${conDeuda.length} clientes con deuda</div></div>
-    <div class="stat-card" style="padding:10px 16px">
-      <div class="stat-label">Total adeudado</div>
-      <div class="stat-value red" style="font-size:18px">${fmt(total)}</div>
+    <div><div class="page-title">Deudas</div><div class="page-subtitle">${conDeuda.length} clientes con saldo pendiente</div></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)">Total adeudado</div>
+      <div style="font-size:20px;font-weight:600;color:var(--danger)">${fmt(total)}</div>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
     <div class="search-box" style="flex:1;min-width:180px;margin-bottom:0">
-      <span class="search-icon">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    </span>
+      <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
       <input type="text" id="search-deudas" placeholder="Buscar cliente..." oninput="filterDeudas()" style="padding-left:40px" autocomplete="off">
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1405,9 +1584,10 @@ function filterDeudas(){
     const vs=ventasByCliente(c.id).filter(v=>(parseFloat(v.adeuda)||0)>0);
     if(!vs.length) return null;
     const totalAdeuda=vs.reduce((s,v)=>s+(parseFloat(v.adeuda)||0),0);
-    const ultimaFecha=vs.map(v=>v.fechaCompra||'').sort().reverse()[0]||'';
+    const ultimaFecha=vs.map(v=>v.fechaCompra||'').filter(Boolean).sort().reverse()[0]||'';
     const proxCuota=vs.map(v=>v.proxCuota||'').filter(Boolean).sort()[0]||'';
-    return {c, vs, totalAdeuda, ultimaFecha, proxCuota};
+    const dias=diasSinPagar(vs);
+    return {c, vs, totalAdeuda, ultimaFecha, proxCuota, dias};
   }).filter(Boolean);
 
   if(q) conDeuda=conDeuda.filter(d=>d.c.nombre.toLowerCase().includes(q));
@@ -1418,21 +1598,26 @@ function filterDeudas(){
 
   let html='';
   if(!conDeuda.length){
-    html=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M20 6 9 17l-5-5"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'Ningún cliente tiene deuda pendiente'}</div></div>`;
+    html=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M20 6 9 17l-5-5"/></svg></div><div class="empty-state-text">${q?'Sin resultados para "'+q+'"':'Ningún cliente tiene saldo pendiente'}</div></div>`;
   } else {
-    html=`<div class="client-list">`+conDeuda.map(({c,vs,totalAdeuda,ultimaFecha,proxCuota})=>{
+    html=`<div class="client-list">`+conDeuda.map(({c,vs,totalAdeuda,ultimaFecha,proxCuota,dias})=>{
       const vencida=proxCuota&&isVencida(proxCuota);
       const proxima=proxCuota&&isProxima(proxCuota)&&!vencida;
-      return`<div class="client-card" onclick="showPage('cliente-detalle','${c.id}')">
-        <div class="avatar" style="background:${avatarColor(c.nombre)}">${initials(c.nombre)}</div>
-        <div style="flex:1;min-width:0">
+      const diasColor = dias===null?'var(--text-2)':dias>30?'var(--danger)':dias>15?'var(--warning)':'var(--text-2)';
+      const diasLabel = dias!==null?`${dias}d sin pagar`:'';
+      return`<div class="client-card">
+        <div class="avatar" style="background:${avatarColor(c.nombre)};cursor:pointer" onclick="showPage('cliente-detalle','${c.id}')">${initials(c.nombre)}</div>
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="showPage('cliente-detalle','${c.id}')">
           <div class="client-name">${c.nombre}</div>
-          <div class="client-meta">${vs.length} cuota${vs.length!==1?'s':''} pendiente${vs.length!==1?'s':''}${ultimaFecha?' · '+fmtDate(ultimaFecha):''}</div>
-          ${proxCuota?`<div style="margin-top:4px;font-size:12px">Próxima: <strong>${fmtDate(proxCuota)}</strong> ${vencida?'<span class="badge badge-red">Vencida</span>':proxima?'<span class="badge badge-orange">Esta semana</span>':''}</div>`:''}
+          <div class="client-meta">${ultimaFecha?'Última compra: '+fmtDate(ultimaFecha):''}${diasLabel?` · <span style="color:${diasColor}">${diasLabel}</span>`:''}</div>
+          ${proxCuota?`<div style="margin-top:3px;font-size:12px">Cuota: <strong>${fmtDate(proxCuota)}</strong> ${vencida?'<span class="badge badge-red">Vencida</span>':proxima?'<span class="badge badge-orange">Esta semana</span>':''}</div>`:''}
         </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div class="client-deuda pos">${fmt(totalAdeuda)}</div>
-          <div style="font-size:11px;color:var(--text-2)">adeuda</div>
+        <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div>
+            <div style="font-size:16px;font-weight:600;color:var(--danger)">${fmt(totalAdeuda)}</div>
+            <div style="font-size:11px;color:var(--text-2)">saldo</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModalPago('${c.id}','${c.nombre.replace(/'/g,"\\'")}')">Registrar pago</button>
         </div>
       </div>`;
     }).join('')+`</div>`;
@@ -1440,53 +1625,131 @@ function filterDeudas(){
   document.getElementById('deudas-list').innerHTML=html;
 }
 
-// ─── DETALLE CLIENTE ──────────────────────────────────────────────────────────
-function renderClienteDetalle(){
+// ─── DETALLE CLIENTE (CUENTA CORRIENTE) ─────────────────────────────────────
+let _ccData = null; // cache de la cuenta corriente cargada
+
+async function renderClienteDetalle(){
   const c=getCliente(currentClienteId); if(!c){showPage('clientes');return;}
-  const vs=ventasByCliente(currentClienteId), t=totalesV(vs);
-  let tabla='';
-  if(!vs.length){ tabla=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div class="empty-state-text">Sin ventas registradas</div></div>`; }
-  else{ tabla=`<div class="table-container"><table class="table-responsive">
-    <thead><tr><th>Prenda</th><th>Cant.</th><th>P.Unit.</th><th>Fecha</th><th>Total</th><th>Costo</th><th>Pagado</th><th>Adeuda</th><th>Próx. Cuota</th><th></th></tr></thead>
-    <tbody>${vs.map(v=>{
-      const cv=isVencida(v.proxCuota)&&(parseFloat(v.adeuda)||0)>0;
-      const cp=isProxima(v.proxCuota)&&!cv&&(parseFloat(v.adeuda)||0)>0;
-      return`<tr>
-        <td data-label="Prenda"><strong>${v.prenda}</strong>${v.notas?`<br><small style="color:var(--text-2)">${v.notas}</small>`:''}</td>
-        <td data-label="Cant.">${v.cantidad||1}</td>
-        <td data-label="P.Unit.">${fmt(v.precioUnitario||v.precioVenta)}</td>
-        <td data-label="Fecha">${fmtDate(v.fechaCompra)}</td>
-        <td data-label="Total">${fmt(v.precioVenta)}</td>
-        <td data-label="Costo" class="amt-neg">${fmt(v.costo)}</td>
-        <td data-label="Pagado" class="amt-pos">${fmt(v.pagado)}</td>
-        <td data-label="Adeuda" class="${(parseFloat(v.adeuda)||0)>0?'amt-neg':'amt-pos'}">${fmt(v.adeuda)}</td>
-        <td data-label="Cuota">${v.proxCuota?fmtDate(v.proxCuota)+(cv?' <span class="badge badge-red">Vencida</span>':cp?' <span class="badge badge-orange">Pronto</span>':''):'—'}</td>
-        <td data-label="">
-          <button class="btn btn-secondary btn-sm" onclick="editVenta('${v.id}')">Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('venta','${v.id}')">Eliminar</button>
-        </td>
-      </tr>`;
-    }).join('')}</tbody>
-    <tfoot><tr><td colspan="4">TOTAL</td><td class="amt-pos">${fmt(t.ventas)}</td><td class="amt-neg">${fmt(t.costos)}</td><td class="amt-pos">${fmt(t.pagado)}</td><td class="${t.adeuda>0?'amt-neg':'amt-pos'}">${fmt(t.adeuda)}</td><td colspan="2"></td></tr></tfoot>
-  </table></div>`; }
+  setMain('<div class="loading-page"><span class="spinner"></span> Cargando...</div>');
+  let cc;
+  try { cc = await api('GET',`/api/clientes/${currentClienteId}/cuenta-corriente`); }
+  catch(e){ setMain(`<div class="empty-state"><div class="empty-state-text">Error: ${e.message}</div></div>`); return; }
+  _ccData = cc;
+
+  const saldo = parseFloat(cc.saldo)||0;
+  const totalComprado = parseFloat(cc.totalComprado)||0;
+  const totalPagado   = parseFloat(cc.totalPagado)||0;
+
+  // Historial unificado: ventas + pagos ordenados por fecha desc
+  const eventos = [
+    ...cc.ventas.map(v=>({tipo:'compra',fecha:v.fechaCompra||v.createdAt?.slice(0,10)||'',data:v})),
+    ...cc.pagos.map(p=>({tipo:'pago',fecha:p.fecha||p.createdAt?.slice(0,10)||'',data:p}))
+  ].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  const historialHTML = eventos.length ? eventos.map(ev=>{
+    if(ev.tipo==='compra'){
+      const v=ev.data;
+      return`<div class="cc-entry">
+        <div class="cc-entry-icon compra">C</div>
+        <div class="cc-entry-detail">
+          <div class="cc-entry-label">${v.prenda}${(v.cantidad||1)>1?` ×${v.cantidad}`:''}</div>
+          <div class="cc-entry-sub">${fmtDate(v.fechaCompra)} ${v.notas?'· '+v.notas:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="cc-entry-amount pos">+${fmt(v.precioVenta)}</div>
+          <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px">
+            <button class="btn btn-secondary btn-sm" onclick="editVenta('${v.id}')">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDelete('venta','${v.id}')">—</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      const p=ev.data;
+      const puedeEliminar=(Date.now()-new Date(p.createdAt).getTime())<86400000;
+      const medioLabel={'efectivo':'Efectivo','transferencia':'Transferencia','tarjeta':'Tarjeta','otro':'Otro'}[p.medioPago]||p.medioPago;
+      return`<div class="cc-entry">
+        <div class="cc-entry-icon pago">P</div>
+        <div class="cc-entry-detail">
+          <div class="cc-entry-label">Pago — ${medioLabel}</div>
+          <div class="cc-entry-sub">${fmtDate(p.fecha)}${p.nota?' · '+p.nota:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="cc-entry-amount neg">−${fmt(p.monto)}</div>
+          ${puedeEliminar?`<button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="eliminarPago('${p.id}')">—</button>`:''}
+        </div>
+      </div>`;
+    }
+  }).join('')
+  : `<div class="empty-state" style="padding:24px"><div class="empty-state-text">Sin movimientos</div></div>`;
+
+  const waMsg=encodeURIComponent(`Hola ${c.nombre}! Te paso tu cuenta al día 👗\nTotal compras: ${fmt(totalComprado)}\nTotal pagado: ${fmt(totalPagado)}\nSaldo pendiente: ${fmt(saldo)}\nCualquier consulta avisame 🙌`);
+  const waLink=c.telefono?`https://wa.me/${c.telefono.replace(/\D/g,'')}?text=${waMsg}`:null;
+
   setMain(`
   <div class="back-btn" onclick="showPage('clientes')">◀ Volver a Clientes</div>
   <div class="page-header">
     <div style="display:flex;align-items:center;gap:13px">
       <div class="avatar" style="background:${avatarColor(c.nombre)};width:50px;height:50px;font-size:18px">${initials(c.nombre)}</div>
-      <div><div class="page-title">${c.nombre}</div><div class="page-subtitle">${c.telefono||''}${c.notas?' · '+c.notas:''}</div></div>
+      <div>
+        <div class="page-title">${c.nombre}</div>
+        <div class="page-subtitle" style="font-size:${saldo>0?'16px':'14px'};font-weight:${saldo>0?'600':'400'};color:${saldo>0?'var(--danger)':'var(--success)'}">
+          Saldo: ${fmt(saldo)}
+        </div>
+      </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${waLink?`<a href="${waLink}" target="_blank" class="btn btn-secondary btn-sm">WhatsApp</a>`:''}
       <button class="btn btn-danger btn-sm" onclick="confirmDelete('cliente','${c.id}')">Eliminar</button>
-      <button class="btn btn-primary" onclick="openModalVenta('${c.id}')">Nueva Venta</button>
+      <button class="btn btn-secondary" onclick="openModalVenta('${c.id}')">+ Nueva venta</button>
+      <button class="btn btn-primary" onclick="openModalPago('${c.id}','${c.nombre.replace(/'/g,"\\'")}')">+ Registrar pago</button>
     </div>
   </div>
   <div class="stats-grid" style="margin-bottom:16px">
-    <div class="stat-card"><div class="stat-label">Compras</div><div class="stat-value blue">${vs.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Comprado</div><div class="stat-value green">${fmt(t.ventas)}</div></div>
-    <div class="stat-card"><div class="stat-label">Deuda</div><div class="stat-value ${t.adeuda>0?'red':'green'}">${fmt(t.adeuda)}</div></div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:6px">Compras</div>
+      <div style="font-size:22px;font-weight:600;color:var(--text)">${cc.ventas.length}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:6px">Total comprado</div>
+      <div style="font-size:22px;font-weight:600;color:var(--text)">${fmt(totalComprado)}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:6px">Total pagado</div>
+      <div style="font-size:22px;font-weight:600;color:var(--text)">${fmt(totalPagado)}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:6px">Saldo</div>
+      <div style="font-size:22px;font-weight:600;color:${saldo>0?'var(--danger)':'var(--success)'}">${fmt(saldo)}</div>
+    </div>
   </div>
-  <div class="card"><h3 style="margin-bottom:14px;font-size:15px">Historial de Compras</h3>${tabla}</div>`);
+  <div class="card" style="margin-bottom:16px">
+    <label class="form-label" style="display:block;margin-bottom:6px">Notas</label>
+    <textarea id="cliente-notas-input" class="form-input" rows="2" placeholder="Notas sobre esta clienta..." style="resize:none" oninput="debounceSaveNotas()">${c.notas||''}</textarea>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)">Cuenta corriente</span>
+    </div>
+    <div style="padding:0 20px">${historialHTML}</div>
+  </div>`);
+}
+
+let _notasDebounceTimer = null;
+function debounceSaveNotas() {
+  clearTimeout(_notasDebounceTimer);
+  _notasDebounceTimer = setTimeout(async () => {
+    const txt = document.getElementById('cliente-notas-input')?.value || '';
+    try { await api('PUT', `/api/clientes/${currentClienteId}`, { notas: txt }); }
+    catch {}
+  }, 1000);
+}
+
+async function eliminarPago(id) {
+  if (!confirm('¿Eliminar este pago?')) return;
+  try {
+    await api('DELETE', `/api/pagos/${id}`);
+    await renderClienteDetalle();
+  } catch(e) { alert(e.message); }
 }
 
 // ─── TODAS LAS VENTAS ─────────────────────────────────────────────────────────
@@ -1839,6 +2102,11 @@ async function renderConfig(){
       <label class="form-label">Email</label>
       <input type="email" class="form-input" value="${_currentUser?.email||''}" disabled style="opacity:.45;cursor:not-allowed">
     </div>
+    <div class="form-group">
+      <label class="form-label">Meta de ventas mensual (opcional)</label>
+      <input type="number" class="form-input" id="cfg-meta-mensual" min="0" step="100" placeholder="Ej: 500000" value="${_currentUser?.metaMensual||''}">
+      <div style="font-size:11px;color:var(--text-3);margin-top:4px">Muestra una barra de progreso en el Dashboard</div>
+    </div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
       <button type="button" class="btn btn-primary" id="btn-save-perfil" onclick="savePerfil()">Guardar cambios</button>
       <div id="perfil-result" style="font-size:13px"></div>
@@ -1962,8 +2230,10 @@ async function savePerfil() {
   btn.disabled = true;
   try {
     const nombre = document.getElementById('cfg-nombre')?.value?.trim() || '';
-    await api('PUT','/api/perfil', { nombre });
-    if (_currentUser) _currentUser.nombre = nombre;
+    const metaRaw = document.getElementById('cfg-meta-mensual')?.value;
+    const metaMensual = metaRaw ? parseFloat(metaRaw) || null : null;
+    await api('PUT','/api/perfil', { nombre, metaMensual });
+    if (_currentUser) { _currentUser.nombre = nombre; _currentUser.metaMensual = metaMensual; }
     renderUserBadge();
     resEl.innerHTML = '<span style="color:#5CB870">Guardado ✓</span>';
     setTimeout(() => { if (resEl) resEl.innerHTML = ''; }, 2000);
@@ -1979,6 +2249,177 @@ async function savePerfil() {
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── MODAL PAGO ───────────────────────────────────────────────────────────────
+let _pagoClienteId = null;
+function openModalPago(clienteId, nombre) {
+  _pagoClienteId = clienteId;
+  document.getElementById('pago-monto').value = '';
+  document.getElementById('pago-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pago-medio').value = 'efectivo';
+  document.getElementById('pago-nota').value = '';
+  document.getElementById('modal-pago-cliente-nombre').textContent = nombre || '';
+  openModal('modal-pago');
+  setTimeout(() => document.getElementById('pago-monto')?.focus(), 100);
+}
+
+async function submitPago(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit-pago');
+  btn.disabled = true; btn.textContent = 'Registrando...';
+  try {
+    const r = await api('POST', '/api/pagos', {
+      clienteId:  _pagoClienteId,
+      monto:      parseFloat(document.getElementById('pago-monto').value),
+      fecha:      document.getElementById('pago-fecha').value,
+      medioPago:  document.getElementById('pago-medio').value,
+      nota:       document.getElementById('pago-nota').value.trim(),
+    });
+    closeModal('modal-pago');
+    if (currentPage === 'cliente-detalle') await renderClienteDetalle();
+    else if (currentPage === 'deudas') { await loadAll(); renderDeudas(); }
+  } catch(e) { alert(e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Registrar'; }
+}
+
+// ─── BÚSQUEDA GLOBAL ──────────────────────────────────────────────────────────
+function openSearch() {
+  document.getElementById('search-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('search-global-input')?.focus(), 60);
+}
+function closeSearch() {
+  document.getElementById('search-overlay').classList.remove('open');
+  document.getElementById('search-global-input').value = '';
+  document.getElementById('search-global-results').innerHTML = '<div class="search-no-results">Escribí para buscar...</div>';
+}
+function runSearch() {
+  const q = (document.getElementById('search-global-input')?.value || '').toLowerCase().trim();
+  const res = document.getElementById('search-global-results');
+  if (!q) { res.innerHTML = '<div class="search-no-results">Escribí para buscar...</div>'; return; }
+
+  const rc = clientes.filter(c => c.nombre.toLowerCase().includes(q)).slice(0, 5);
+  const rv = ventas.filter(v => v.prenda.toLowerCase().includes(q)).slice(0, 5);
+  const rg = gastos.filter(g => (g.descripcion||'').toLowerCase().includes(q)).slice(0, 5);
+
+  if (!rc.length && !rv.length && !rg.length) {
+    res.innerHTML = `<div class="search-no-results">Sin resultados para "${q}"</div>`; return;
+  }
+  let html = '';
+  if (rc.length) {
+    html += `<div class="search-result-group">Clientes</div>`;
+    html += rc.map(c => `<div class="search-result-item" onclick="closeSearch();showPage('cliente-detalle','${c.id}')">
+      <div class="cc-entry-icon compra" style="width:24px;height:24px;font-size:10px;flex-shrink:0">${initials(c.nombre)}</div>
+      <div class="search-result-item-title">${c.nombre}</div>
+      <div class="search-result-item-sub">${c.telefono||''}</div>
+    </div>`).join('');
+  }
+  if (rv.length) {
+    html += `<div class="search-result-group">Ventas</div>`;
+    html += rv.map(v => { const c=getCliente(v.clienteId); return `<div class="search-result-item" onclick="closeSearch();showPage('cliente-detalle','${v.clienteId}')">
+      <div class="search-result-item-title">${v.prenda}</div>
+      <div class="search-result-item-sub">${c?c.nombre:'?'} · ${fmt(v.precioVenta)}</div>
+    </div>`; }).join('');
+  }
+  if (rg.length) {
+    html += `<div class="search-result-group">Gastos</div>`;
+    html += rg.map(g => `<div class="search-result-item" onclick="closeSearch();showPage('gastos')">
+      <div class="search-result-item-title">${g.descripcion}</div>
+      <div class="search-result-item-sub">${fmtDate(g.fecha)} · ${fmt(g.monto)}</div>
+    </div>`).join('');
+  }
+  res.innerHTML = html;
+}
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+  if (e.key === 'Escape' && document.getElementById('search-overlay').classList.contains('open')) closeSearch();
+});
+
+// ─── VENTA RÁPIDA ─────────────────────────────────────────────────────────────
+function openVentaRapida() {
+  document.getElementById('vr-cliente-search').value = '';
+  document.getElementById('vr-cliente-id').value = '';
+  document.getElementById('vr-cliente-selected').style.display = 'none';
+  document.getElementById('vr-cliente-list').style.display = 'none';
+  document.getElementById('vr-pago-toggle').checked = false;
+  document.getElementById('vr-pago-section').style.display = 'none';
+  // Limpiar items excepto el primero
+  const container = document.getElementById('vr-items');
+  const items = container.querySelectorAll('.vr-item');
+  items.forEach((item, i) => { if (i > 0) item.remove(); else { item.querySelectorAll('input').forEach(inp => { inp.value = inp.type==='number'&&inp.classList.contains('vr-cantidad')?'1':''; }); } });
+  openModal('modal-venta-rapida');
+}
+function vrTogglePago() {
+  document.getElementById('vr-pago-section').style.display = document.getElementById('vr-pago-toggle').checked ? 'block' : 'none';
+}
+function vrAgregarItem() {
+  const container = document.getElementById('vr-items');
+  const div = document.createElement('div');
+  div.className = 'vr-item';
+  div.style.cssText = 'background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px;position:relative';
+  div.innerHTML = `<button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px">×</button>
+    <div class="form-row"><div class="form-group" style="margin-bottom:8px"><label class="form-label">Prenda</label><input type="text" class="form-input vr-prenda" placeholder="Ej: Blusa" required></div>
+    <div class="form-group" style="margin-bottom:8px"><label class="form-label">Precio venta</label><input type="number" class="form-input vr-precio" placeholder="0" min="0" step="0.01" required></div></div>
+    <div class="form-row"><div class="form-group" style="margin-bottom:0"><label class="form-label">Costo (opcional)</label><input type="number" class="form-input vr-costo" placeholder="0" min="0" step="0.01"></div>
+    <div class="form-group" style="margin-bottom:0"><label class="form-label">Cantidad</label><input type="number" class="form-input vr-cantidad" value="1" min="1"></div></div>`;
+  container.appendChild(div);
+}
+function filtrarClientesVR() {
+  const q = (document.getElementById('vr-cliente-search').value || '').toLowerCase();
+  const list = document.getElementById('vr-cliente-list');
+  if (!q) { list.style.display = 'none'; return; }
+  const matches = clientes.filter(c => c.nombre.toLowerCase().includes(q)).slice(0, 6);
+  if (!matches.length) { list.style.display = 'none'; return; }
+  list.innerHTML = matches.map(c => `<div onclick="selVRCliente('${c.id}','${c.nombre.replace(/'/g,"\\'")}')"`+
+    ` style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text)">${c.nombre}</div>`).join('');
+  list.style.display = 'block';
+}
+function selVRCliente(id, nombre) {
+  document.getElementById('vr-cliente-id').value = id;
+  document.getElementById('vr-cliente-search').value = nombre;
+  document.getElementById('vr-cliente-list').style.display = 'none';
+  const sel = document.getElementById('vr-cliente-selected');
+  sel.textContent = `✓ ${nombre}`; sel.style.display = 'block';
+}
+async function submitVentaRapida(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit-vr');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const clienteId = document.getElementById('vr-cliente-id').value;
+    if (!clienteId) throw new Error('Seleccioná un cliente');
+    const items = [...document.querySelectorAll('#vr-items .vr-item')].map(item => ({
+      prenda:  item.querySelector('.vr-prenda')?.value?.trim() || '',
+      precio:  parseFloat(item.querySelector('.vr-precio')?.value) || 0,
+      costo:   parseFloat(item.querySelector('.vr-costo')?.value)  || 0,
+      cantidad:parseInt(item.querySelector('.vr-cantidad')?.value) || 1,
+    })).filter(i => i.prenda && i.precio > 0);
+    if (!items.length) throw new Error('Agregá al menos una prenda con precio');
+
+    const pagoMonto = document.getElementById('vr-pago-toggle').checked ? parseFloat(document.getElementById('vr-pago-monto')?.value)||0 : 0;
+    const pagoMedio = document.getElementById('vr-pago-medio')?.value || 'efectivo';
+
+    // Crear cada prenda como venta separada
+    for (const item of items) {
+      await api('POST', '/api/ventas', {
+        clienteId, prenda: item.prenda,
+        precioVenta: item.precio, costo: item.costo,
+        cantidad: item.cantidad, pagado: 0, fechaCompra: new Date().toISOString().split('T')[0]
+      });
+    }
+
+    // Registrar pago inicial si corresponde
+    if (pagoMonto > 0) {
+      await api('POST', '/api/pagos', { clienteId, monto: pagoMonto, medioPago: pagoMedio, fecha: new Date().toISOString().split('T')[0] });
+    }
+
+    closeModal('modal-venta-rapida');
+    const c = getCliente(clienteId);
+    alert(`Venta registrada.${c?' Cliente: '+c.nombre:''}`);
+    await loadAll();
+    renderDashboard();
+  } catch(e) { alert(e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Confirmar venta'; }
+}
 
 function openModalCliente(){ document.getElementById('form-cliente').reset(); openModal('modal-cliente'); }
 
@@ -2698,13 +3139,11 @@ async function renderAdminDashboard() {
       <div><div class="page-title">Dashboard global</div><div class="page-subtitle">Métricas de toda la plataforma</div></div>
     </div>
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-      <div class="stat-card"><div class="stat-label">Usuarios registrados</div><div class="stat-value blue">${stats.totalUsuarios||0}</div></div>
-      <div class="stat-card"><div class="stat-label">Activos este mes</div><div class="stat-value green">${stats.activosMes||0}</div></div>
-      <div class="stat-card"><div class="stat-label">Facturado este mes</div><div class="stat-value green">${fmt(stats.facturadoMes||0)}</div><div style="font-size:11px;color:var(--text-3);margin-top:4px">solo ventas pagadas</div></div>
-      <div class="stat-card"><div class="stat-label">Pendiente de cobro</div><div class="stat-value orange">${fmt(stats.pendienteCobro||0)}</div><div style="font-size:11px;color:var(--text-3);margin-top:4px">cuotas por cobrar</div></div>
-      <div class="stat-card"><div class="stat-label">Ventas online mes</div><div class="stat-value">${fmt(stats.ventasOnlineMes||0)}</div></div>
-      <div class="stat-card"><div class="stat-label">Cuentas con tienda</div><div class="stat-value">${stats.cuentasConTienda||0}</div></div>
-      <div class="stat-card"><div class="stat-label">MP conectados</div><div class="stat-value">${stats.mpConectados||0}</div></div>
+      <div class="stat-card"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Usuarios registrados</div><div style="font-size:28px;font-weight:600;color:var(--text)">${stats.totalUsuarios||0}</div></div>
+      <div class="stat-card"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Activos este mes</div><div style="font-size:28px;font-weight:600;color:var(--text)">${stats.activosMes||0}</div></div>
+      <div class="stat-card"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Nuevos este mes</div><div style="font-size:28px;font-weight:600;color:var(--text)">${stats.nuevosEsteMes||0}</div></div>
+      <div class="stat-card"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Con tienda</div><div style="font-size:28px;font-weight:600;color:var(--text)">${stats.cuentasConTienda||0}</div></div>
+      <div class="stat-card"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">MP conectados</div><div style="font-size:28px;font-weight:600;color:var(--text)">${stats.mpConectados||0}</div></div>
     </div>
     <div class="card" style="margin-bottom:16px">
       <h3 style="margin-bottom:14px;font-size:14px;font-weight:500">Actividad reciente</h3>

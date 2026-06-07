@@ -61,7 +61,16 @@ function toGasto(r) {
 function toVariante(r) {
   return {
     id: r.id, productoId: r.producto_id, tipo: r.tipo,
-    nombre: r.nombre, cantidad: r.cantidad, imagen: r.imagen, colorId: r.color_id
+    nombre: r.nombre, cantidad: r.cantidad, imagen: r.imagen, colorId: r.color_id,
+    stockMinimo: r.stock_minimo || 0
+  };
+}
+
+function toPago(r) {
+  return {
+    id: r.id, userId: r.user_id, clienteId: r.cliente_id,
+    monto: r.monto, fecha: r.fecha, medioPago: r.medio_pago,
+    nota: r.nota, createdAt: r.created_at
   };
 }
 
@@ -109,13 +118,17 @@ async function requireAuth(req) {
   if (error || !user) return null;
 
   const { data: perfil } = await adminSupabase
-    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada').eq('id', user.id).single();
+    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada, alertas_email, email_alternativo, telegram_config, meta_mensual').eq('id', user.id).single();
 
   if (!perfil || !perfil.activo) return null;
   return {
     userId: user.id, email: user.email, role: perfil.rol,
     nombre: perfil.nombre, tipoCuenta: perfil.tipo_cuenta || 'gestion',
-    tiendaConfigurada: perfil.tienda_configurada || false
+    tiendaConfigurada: perfil.tienda_configurada || false,
+    alertasEmail: perfil.alertas_email !== false,
+    emailAlternativo: perfil.email_alternativo || '',
+    telegramConfig: perfil.telegram_config || null,
+    metaMensual: perfil.meta_mensual || null
   };
 }
 
@@ -265,6 +278,7 @@ module.exports = async function handler(req, res) {
   if (method === 'POST' && p === 'auth/registro') return handleRegistro(req, res);
   if (method === 'GET'  && p === 'mp/callback')   return handleMpCallback(req, res);
   if (method === 'POST' && p === 'shipping-quote') return handleShippingQuote(req, res);
+  if (method === 'POST' && p === 'run-migration-v3') return handleMigrationV3(req, res);
 
   // Rutas protegidas
   const user = await requireAuth(req);
@@ -301,8 +315,10 @@ module.exports = async function handler(req, res) {
   // Clientes
   if (method === 'GET'  && p === 'clientes')           return handleGetClientes(req, res, user);
   if (method === 'POST' && p === 'clientes')           return handlePostCliente(req, res, user);
-  if (method === 'PUT'  && segments[0] === 'clientes') return handlePutCliente(req, res, user, segments[1]);
-  if (method === 'DELETE' && segments[0] === 'clientes') return handleDeleteCliente(req, res, user, segments[1]);
+  if (method === 'PUT'  && segments[0] === 'clientes' && !segments[2]) return handlePutCliente(req, res, user, segments[1]);
+  if (method === 'DELETE' && segments[0] === 'clientes' && !segments[2]) return handleDeleteCliente(req, res, user, segments[1]);
+  if (method === 'GET'  && segments[0] === 'clientes' && segments[2] === 'cuenta-corriente')
+    return handleGetCuentaCorriente(req, res, user, segments[1]);
 
   // Ventas
   if (method === 'GET'  && p === 'ventas')             return handleGetVentas(req, res, user);
@@ -318,6 +334,10 @@ module.exports = async function handler(req, res) {
   if (method === 'POST' && p === 'gastos')             return handlePostGasto(req, res, user);
   if (method === 'PUT'  && segments[0] === 'gastos')   return handlePutGasto(req, res, user, segments[1]);
   if (method === 'DELETE' && segments[0] === 'gastos') return handleDeleteGasto(req, res, user, segments[1]);
+
+  // Pagos (cuenta corriente)
+  if (method === 'POST'   && p === 'pagos')             return handlePostPago(req, res, user);
+  if (method === 'DELETE' && segments[0] === 'pagos')   return handleDeletePago(req, res, user, segments[1]);
 
   // Productos
   if (method === 'GET'  && p === 'productos')          return handleGetProductos(req, res, user);
@@ -338,9 +358,16 @@ module.exports = async function handler(req, res) {
   // Ventas online
   if (method === 'GET' && p === 'ventas-online')       return handleGetVentasOnline(req, res, user);
 
-  // Config (tienda + MP)
-  if (method === 'GET' && p === 'config')              return handleGetConfig(req, res, user);
-  if (method === 'PUT' && p === 'config')              return handlePutConfig(req, res, user);
+  // Perfil
+  if (method === 'GET' && p === 'perfil')                    return handleGetPerfil(req, res, user);
+  if (method === 'PUT' && p === 'perfil')                    return handlePutPerfil(req, res, user);
+  if (method === 'PUT' && p === 'perfil/tienda')             return handlePutPerfilTienda(req, res, user);
+
+  // Config (tienda + MP + notificaciones)
+  if (method === 'GET'  && p === 'config')                   return handleGetConfig(req, res, user);
+  if (method === 'PUT'  && p === 'config')                   return handlePutConfig(req, res, user);
+  if (method === 'POST' && p === 'config/telegram')          return handleTelegramConfig(req, res, user);
+  if (method === 'POST' && p === 'config/telegram-test')     return handleTelegramTest(req, res, user);
 
   // Stock
   if (method === 'POST' && p === 'stock/publicar')     return handlePublicarStock(req, res, user);
@@ -681,10 +708,11 @@ async function handlePostVariante(req, res, user, productoId) {
 async function handlePutVariante(req, res, user, id) {
   const body = await parseBody(req);
   const updates = {};
-  if (body.nombre   !== undefined) updates.nombre   = body.nombre;
-  if (body.cantidad !== undefined) updates.cantidad = parseInt(body.cantidad);
-  if (body.imagen   !== undefined) updates.imagen   = body.imagen;
-  if (body.colorId  !== undefined) updates.color_id = body.colorId;
+  if (body.nombre      !== undefined) updates.nombre      = body.nombre;
+  if (body.cantidad    !== undefined) updates.cantidad    = parseInt(body.cantidad);
+  if (body.imagen      !== undefined) updates.imagen      = body.imagen;
+  if (body.colorId     !== undefined) updates.color_id    = body.colorId;
+  if (body.stockMinimo !== undefined) updates.stock_minimo = parseInt(body.stockMinimo) || 0;
 
   const { data, error } = await adminSupabase
     .from('producto_variantes').update(updates).eq('id', id).select().single();
@@ -707,22 +735,122 @@ async function handleGetVentasOnline(req, res, user) {
   return json(res, 200, data);
 }
 
-// ── CONFIG (tienda + MP) ──────────────────────────────────────────────────────
+// ── CONFIG (tienda + MP + notificaciones) ─────────────────────────────────────
 async function handleGetConfig(req, res, user) {
-  const { data } = await adminSupabase
+  const { data: mp } = await adminSupabase
     .from('mp_conexiones')
     .select('conectado, tienda_url, tienda_nombre, vercel_deploy_hook, mp_last_sync, mp_user_id')
     .eq('user_id', user.userId)
     .single();
 
+  let telegramToken = '';
+  const tgCfg = user.telegramConfig;
+  if (tgCfg?.token) { try { telegramToken = decrypt(tgCfg.token); } catch {} }
+
   return json(res, 200, {
-    tiendaUrl:         data?.tienda_url         || '',
-    tiendaNombre:      data?.tienda_nombre       || '',
-    vercelDeployHook:  data?.vercel_deploy_hook  || '',
-    mpConectado:       data?.conectado           || false,
-    mpUserId:          data?.mp_user_id          || null,
-    mpLastSync:        data?.mp_last_sync        || null
+    tiendaUrl:           mp?.tienda_url          || '',
+    tiendaNombre:        mp?.tienda_nombre        || '',
+    vercelDeployHook:    mp?.vercel_deploy_hook   || '',
+    mpConectado:         mp?.conectado            || false,
+    mpUserId:            mp?.mp_user_id           || null,
+    mpLastSync:          mp?.mp_last_sync         || null,
+    alertasEmail:        user.alertasEmail,
+    emailAlternativo:    user.emailAlternativo,
+    telegramConfigurado: !!(tgCfg?.token && tgCfg?.chat_id),
+    telegramActivo:      tgCfg?.activo === true,
+    telegramToken,
+    telegramChatId:      tgCfg?.chat_id          || ''
   });
+}
+
+async function handleGetPerfil(req, res, user) {
+  return json(res, 200, {
+    nombre:            user.nombre,
+    email:             user.email,
+    tipoCuenta:        user.tipoCuenta,
+    tiendaConfigurada: user.tiendaConfigurada,
+    metaMensual:       user.metaMensual,
+  });
+}
+
+async function handlePutPerfilTienda(req, res, user) {
+  const body = await parseBody(req);
+  const mpUpdates = {};
+  if (body.tiendaNombre    !== undefined) mpUpdates.tienda_nombre        = body.tiendaNombre;
+  if (body.tiendaUrl       !== undefined) mpUpdates.tienda_url           = body.tiendaUrl;
+  if (body.vercelDeployHook !== undefined) mpUpdates.vercel_deploy_hook  = body.vercelDeployHook;
+
+  const { error: mpErr } = await adminSupabase
+    .from('mp_conexiones').update(mpUpdates).eq('user_id', user.userId);
+  if (mpErr) return json(res, 500, { error: mpErr.message });
+
+  await adminSupabase.from('perfiles')
+    .update({ tienda_configurada: true }).eq('id', user.userId);
+
+  return json(res, 200, { ok: true });
+}
+
+async function handlePutPerfil(req, res, user) {
+  const body = await parseBody(req);
+  const updates = {};
+  if (body.nombre            !== undefined) updates.nombre            = body.nombre;
+  if (body.alertasEmail      !== undefined) updates.alertas_email     = body.alertasEmail;
+  if (body.emailAlternativo  !== undefined) updates.email_alternativo = body.emailAlternativo;
+  if (body.metaMensual       !== undefined) updates.meta_mensual      = body.metaMensual ? parseFloat(body.metaMensual) : null;
+  const { error } = await adminSupabase.from('perfiles').update(updates).eq('id', user.userId);
+  if (error) return json(res, 500, { error: error.message });
+  return json(res, 200, { ok: true });
+}
+
+async function handleTelegramConfig(req, res, user) {
+  const body = await parseBody(req);
+  const { chatId, activo } = body;
+  const tokenInput = body.token || '';
+
+  let encryptedToken;
+  if (tokenInput) {
+    encryptedToken = encrypt(tokenInput);
+  } else {
+    // Mantener token existente
+    const existing = user.telegramConfig;
+    encryptedToken = existing?.token || null;
+  }
+
+  if (!encryptedToken && !chatId) {
+    await adminSupabase.from('perfiles').update({ telegram_config: null }).eq('id', user.userId);
+    return json(res, 200, { ok: true });
+  }
+  if (!encryptedToken || !chatId) return json(res, 400, { error: 'Faltan token o Chat ID' });
+
+  const telegramConfig = { token: encryptedToken, chat_id: chatId, activo: activo !== false };
+  const { error } = await adminSupabase.from('perfiles').update({ telegram_config: telegramConfig }).eq('id', user.userId);
+  if (error) return json(res, 500, { error: error.message });
+  return json(res, 200, { ok: true });
+}
+
+async function handleTelegramTest(req, res, user) {
+  const body = await parseBody(req);
+  const chatId = body.chatId;
+  let token = body.token;
+
+  if (!token) {
+    const tgCfg = user.telegramConfig;
+    if (tgCfg?.token) { try { token = decrypt(tgCfg.token); } catch {} }
+  }
+  if (!token || !chatId) return json(res, 400, { error: 'Faltan token o Chat ID' });
+
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: 'CHANA Gestión: conexión de Telegram funcionando correctamente.' })
+    });
+    const data = await resp.json();
+    if (!data.ok) return json(res, 400, { error: data.description || 'Error de Telegram' });
+    return json(res, 200, { ok: true });
+  } catch (e) {
+    return json(res, 500, { error: e.message });
+  }
 }
 
 async function handlePutConfig(req, res, user) {
@@ -1050,32 +1178,28 @@ async function handleAdminStats(req, res) {
 
   const [
     { count: totalUsuarios },
-    { data: ventasMes },
-    { data: ventasOnlineMes },
     { count: cuentasConTienda },
     { count: mpConectados },
-    { data: actividadReciente }
+    { data: actividadReciente },
+    { count: nuevosEsteMes },
   ] = await Promise.all([
     adminSupabase.from('perfiles').select('*', { count: 'exact', head: true }).eq('rol', 'usuario'),
-    adminSupabase.from('ventas').select('precio_venta').gte('created_at', inicioMes),
-    adminSupabase.from('ventas_online').select('monto').gte('created_at', inicioMes),
     adminSupabase.from('perfiles').select('*', { count: 'exact', head: true }).eq('tipo_cuenta', 'gestion_tienda'),
     adminSupabase.from('mp_conexiones').select('*', { count: 'exact', head: true }).eq('conectado', true),
     adminSupabase.from('logs_actividad').select('accion, detalle, created_at').order('created_at', { ascending: false }).limit(20),
+    adminSupabase.from('perfiles').select('*', { count: 'exact', head: true }).gte('created_at', inicioMes),
   ]);
 
-  const facturadoMes = (ventasMes || []).reduce((s, v) => s + (parseFloat(v.precio_venta) || 0), 0);
-  const ventasOnlineMesTotal = (ventasOnlineMes || []).reduce((s, v) => s + (parseFloat(v.monto) || 0), 0);
-
-  // Usuarios activos este mes (con ventas o actividad)
   const { data: activosMesData } = await adminSupabase
     .from('logs_actividad').select('user_id').gte('created_at', inicioMes).not('user_id', 'is', null);
   const activosMes = new Set((activosMesData || []).map(a => a.user_id)).size;
 
   return json(res, 200, {
-    totalUsuarios: totalUsuarios || 0, activosMes,
-    facturadoMes, ventasOnlineMes: ventasOnlineMesTotal,
-    cuentasConTienda: cuentasConTienda || 0, mpConectados: mpConectados || 0,
+    totalUsuarios:    totalUsuarios    || 0,
+    activosMes,
+    cuentasConTienda: cuentasConTienda || 0,
+    mpConectados:     mpConectados     || 0,
+    nuevosEsteMes:    nuevosEsteMes    || 0,
     actividadReciente: actividadReciente || []
   });
 }
@@ -1153,12 +1277,22 @@ async function handleAdminCrearUsuario(req, res) {
 async function handleAdminVentasGlobales(req, res) {
   const { data, error } = await adminSupabase
     .from('ventas_online')
-    .select('*, perfiles!inner(nombre)')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(500);
   if (error) return json(res, 500, { error: error.message });
+
+  const userIds = [...new Set((data || []).map(v => v.user_id).filter(Boolean))];
+  let perfilesMap = {};
+  if (userIds.length) {
+    const { data: perfiles } = await adminSupabase
+      .from('perfiles').select('id, nombre').in('id', userIds);
+    (perfiles || []).forEach(p => { perfilesMap[p.id] = p; });
+  }
+
   const result = (data || []).map(v => ({
     ...v,
+    perfiles: perfilesMap[v.user_id] || null,
     cuenta: v.perfiles?.nombre || '—',
     comprador: (v.items?.[0]?.nombre || '').slice(0, 30),
     monto: (v.items || []).reduce((s, i) => s + (i.precio * i.cantidad), 0),
@@ -1169,12 +1303,99 @@ async function handleAdminVentasGlobales(req, res) {
 async function handleAdminActividad(req, res) {
   const { data: logs } = await adminSupabase
     .from('logs_actividad')
-    .select('*, perfiles(nombre)')
+    .select('accion, detalle, created_at, ip')
     .order('created_at', { ascending: false })
     .limit(100);
   return json(res, 200, (logs || []).map(l => ({
-    ...l, email: l.detalle?.split(' — ')?.[0] || l.perfiles?.nombre || '—'
+    accion: l.accion,
+    email: l.detalle?.split(' — ')?.[0] || '—',
+    createdAt: l.created_at,
+    ip: l.ip || ''
   })));
+}
+
+// ── PAGOS (CUENTA CORRIENTE) ──────────────────────────────────────────────────
+async function handlePostPago(req, res, user) {
+  const body = await parseBody(req);
+  const monto = parseFloat(body.monto);
+  if (!monto || monto <= 0) return json(res, 400, { error: 'El monto debe ser mayor a 0' });
+
+  const medios = ['efectivo','transferencia','tarjeta','otro'];
+  const medioPago = medios.includes(body.medioPago) ? body.medioPago : 'efectivo';
+  const fecha = body.fecha || new Date().toISOString().split('T')[0];
+  const nota = (body.nota || '').trim().slice(0, 200);
+
+  // Validar que el cliente pertenece al usuario
+  const { data: cliente } = await adminSupabase
+    .from('clientes').select('id').eq('id', body.clienteId).eq('user_id', user.userId).single();
+  if (!cliente) return json(res, 403, { error: 'Cliente no encontrado o sin acceso' });
+
+  // Rate limit: 30 req/min
+  const allowed = await rateLimit(`pagos:${user.userId}`, 30, 60000);
+  if (!allowed) return json(res, 429, { error: 'Demasiadas solicitudes' });
+
+  const { data, error } = await adminSupabase.from('pagos').insert({
+    user_id:    user.userId,
+    cliente_id: body.clienteId,
+    monto,
+    fecha,
+    medio_pago: medioPago,
+    nota
+  }).select().single();
+  if (error) return json(res, 500, { error: error.message });
+
+  await logActividad(user.userId, user.email, 'pago_registrado', `cliente: ${body.clienteId}, monto: ${monto}`);
+
+  // Retornar pago + nuevo saldo del cliente
+  const { data: saldoData } = await adminSupabase
+    .from('saldos_clientes').select('saldo, total_comprado, total_pagado')
+    .eq('cliente_id', body.clienteId).eq('user_id', user.userId).single();
+
+  return json(res, 201, { pago: toPago(data), saldo: saldoData?.saldo || 0 });
+}
+
+async function handleDeletePago(req, res, user, id) {
+  const { data: pago } = await adminSupabase
+    .from('pagos').select('*').eq('id', id).eq('user_id', user.userId).single();
+  if (!pago) return json(res, 404, { error: 'Pago no encontrado' });
+
+  const limite24hs = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  if (user.role !== 'admin' && new Date(pago.created_at) < limite24hs) {
+    return json(res, 403, { error: 'Solo podés eliminar pagos registrados en las últimas 24 horas' });
+  }
+
+  const { error } = await adminSupabase.from('pagos').delete().eq('id', id).eq('user_id', user.userId);
+  if (error) return json(res, 500, { error: error.message });
+
+  await logActividad(user.userId, user.email, 'pago_eliminado', `pago_id: ${id}, monto: ${pago.monto}`);
+  return json(res, 200, { ok: true });
+}
+
+async function handleGetCuentaCorriente(req, res, user, clienteId) {
+  // Verificar que el cliente pertenece al usuario
+  const { data: cliente } = await adminSupabase
+    .from('clientes').select('*').eq('id', clienteId).eq('user_id', user.userId).single();
+  if (!cliente) return json(res, 403, { error: 'Cliente no encontrado' });
+
+  const [ventasRes, pagosRes, saldoRes] = await Promise.all([
+    adminSupabase.from('ventas').select('*')
+      .eq('cliente_id', clienteId).eq('user_id', user.userId)
+      .order('fecha_compra', { ascending: false }),
+    adminSupabase.from('pagos').select('*')
+      .eq('cliente_id', clienteId).eq('user_id', user.userId)
+      .order('fecha', { ascending: false }),
+    adminSupabase.from('saldos_clientes').select('saldo, total_comprado, total_pagado')
+      .eq('cliente_id', clienteId).eq('user_id', user.userId).single(),
+  ]);
+
+  return json(res, 200, {
+    cliente: toCliente(cliente),
+    ventas:  (ventasRes.data || []).map(toVenta),
+    pagos:   (pagosRes.data || []).map(toPago),
+    saldo:   saldoRes.data?.saldo || 0,
+    totalComprado: saldoRes.data?.total_comprado || 0,
+    totalPagado:   saldoRes.data?.total_pagado || 0,
+  });
 }
 
 async function handleAdminGetConfig(req, res) {
@@ -1214,6 +1435,49 @@ async function handleShippingQuote(req, res) {
   } catch (e) {
     return json(res, 200, { envio: null });
   }
+}
+
+// ── MIGRACIÓN V3 (endpoint temporal) ─────────────────────────────────────────
+async function handleMigrationV3(req, res) {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers['authorization'] || '';
+  if (!secret || auth !== `Bearer ${secret}`) return json(res, 401, { error: 'Unauthorized' });
+
+  const steps = [];
+  async function exec(label, sql) {
+    try {
+      const { error } = await adminSupabase.rpc('exec_sql', { sql });
+      if (error) throw error;
+      steps.push({ ok: true, label });
+    } catch(e) {
+      steps.push({ ok: false, label, error: e.message });
+    }
+  }
+
+  // Ejecutar cada ALTER de forma independiente para evitar que un fallo bloquee todo
+  const sqls = [
+    ['CREATE TABLE pagos', `CREATE TABLE IF NOT EXISTS pagos (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      user_id UUID REFERENCES auth.users(id) NOT NULL,
+      cliente_id UUID REFERENCES clientes(id) NOT NULL,
+      monto NUMERIC(12,2) NOT NULL CHECK (monto > 0),
+      fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+      medio_pago TEXT DEFAULT 'efectivo' CHECK (medio_pago IN ('efectivo','transferencia','tarjeta','otro')),
+      nota TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`],
+    ['Enable RLS pagos', `ALTER TABLE pagos ENABLE ROW LEVEL SECURITY`],
+    ['RLS policy pagos', `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='pagos' AND policyname='own_data') THEN CREATE POLICY "own_data" ON pagos USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid()); END IF; END $$`],
+    ['ALTER stock_minimo', `ALTER TABLE producto_variantes ADD COLUMN IF NOT EXISTS stock_minimo INTEGER DEFAULT 0`],
+    ['ALTER meta_mensual', `ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS meta_mensual NUMERIC(12,2) DEFAULT NULL`],
+    ['ALTER gastos categoria', `ALTER TABLE gastos ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'otros'`],
+    ['CREATE VIEW saldos_clientes', `CREATE OR REPLACE VIEW saldos_clientes AS SELECT c.id AS cliente_id, c.user_id, c.nombre, c.telefono, COALESCE(SUM(v.precio_venta * COALESCE(v.cantidad, 1)), 0) AS total_comprado, COALESCE(SUM(p.monto), 0) AS total_pagado, COALESCE(SUM(v.precio_venta * COALESCE(v.cantidad, 1)), 0) - COALESCE(SUM(p.monto), 0) AS saldo FROM clientes c LEFT JOIN ventas v ON v.cliente_id = c.id AND v.user_id = c.user_id LEFT JOIN pagos p ON p.cliente_id = c.id AND p.user_id = c.user_id GROUP BY c.id, c.user_id, c.nombre, c.telefono`],
+    ['MIGRATE pagos existentes', `INSERT INTO pagos (user_id, cliente_id, monto, fecha, medio_pago, nota) SELECT v.user_id, v.cliente_id, (v.precio_venta * COALESCE(v.cantidad, 1)) - COALESCE(v.adeuda, 0), COALESCE(v.fecha_compra, v.created_at::date), 'efectivo', 'Pago migrado desde sistema anterior (venta ID: ' || v.id || ')' FROM ventas v WHERE v.cliente_id IS NOT NULL AND ((v.precio_venta * COALESCE(v.cantidad, 1)) - COALESCE(v.adeuda, 0)) > 0 AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.nota = 'Pago migrado desde sistema anterior (venta ID: ' || v.id || ')')`],
+  ];
+
+  for (const [label, sql] of sqls) await exec(label, sql);
+
+  return json(res, 200, { ok: true, steps });
 }
 
 // ── Exportar función de chequeo de cuotas (usada por cron) ───────────────────
