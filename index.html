@@ -16,10 +16,18 @@
   --success:#3A7D44;--warning:#8A6500;--danger:#8B2020;
   --admin:#1E3A5F;
 }
+[data-theme="light"]{
+  --bg:#F5F4F2;--surface:#FFFFFF;--surface-2:#F0EEEC;
+  --border:#E0DDD9;--border-focus:#B8B4AF;
+  --text:#1A1A1A;--text-2:#666666;--text-3:#999999;
+  --accent:#8C6F5A;--accent-hover:#7A5F4A;
+  --success:#2D6A35;--warning:#7A5800;--danger:#7A1A1A;
+  --admin:#1E3A5F;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;line-height:1.5}
 /* ── SIDEBAR ── */
-.sidebar{width:220px;background:#111;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;left:0;top:0;z-index:100}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;left:0;top:0;z-index:100}
 .sidebar.admin-sidebar{border-top:2px solid var(--admin)}
 .sidebar-logo{padding:14px 16px 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text)}
 .sidebar-logo span{display:block;font-size:11px;font-weight:400;color:var(--text-3);margin-top:2px}
@@ -27,7 +35,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .nav-section-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:10px 20px 4px}
 .nav-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:13px;color:var(--text-2);border-radius:5px;margin:1px 8px;transition:background .1s,color .1s}
 .nav-item:hover{background:var(--surface-2);color:var(--text)}
-.nav-item.active{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--surface-2);color:var(--text);border-left:2px solid var(--accent);padding-left:10px}
 .sidebar-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3)}
 /* ── MAIN ── */
 .main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column}
@@ -37,7 +45,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .sidebar-overlay.open{display:block}
 .menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:18px;cursor:pointer}
 /* ── MOBILE NAV ── */
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid var(--border);z-index:200}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200}
 .mob-nav-inner{display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
 .mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-3);font-size:9px;font-weight:500;cursor:pointer;padding:7px 2px 6px;border:none;background:none;font-family:inherit;transition:color .15s;min-width:0}
 .mob-nav-item.active{color:var(--accent)}
@@ -125,12 +133,16 @@ tfoot tr td{font-weight:600;color:var(--text);border-top:1px solid var(--border)
 .year-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:14px;color:var(--text);transition:all .15s}
 .year-btn:hover{border-color:var(--border-focus);background:var(--surface-2)}
 .year-display{font-size:15px;font-weight:500;min-width:52px;text-align:center;color:var(--text)}
-.alert-box{border-radius:6px;padding:12px 14px;margin-bottom:14px;border:1px solid}
-.alert-box.red{background:rgba(139,32,32,.1);border-color:rgba(139,32,32,.3)}
-.alert-box.yellow{background:rgba(138,101,0,.1);border-color:rgba(138,101,0,.3)}
-.alert-title{font-weight:500;font-size:13px;margin-bottom:6px}
-.alert-title.red{color:#c05050}.alert-title.yellow{color:#C4861C}
-.alert-item{font-size:12px;color:var(--text-2);padding:3px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.alert-box{border-radius:8px;padding:16px 20px;margin-bottom:14px;border:1px solid var(--border);background:var(--surface)}
+.alert-box.red{border-left:3px solid #8B2020}
+.alert-box.yellow{border-left:3px solid #8A6500}
+.alert-title{font-weight:500;font-size:13px;margin-bottom:8px;color:var(--text);display:flex;align-items:center;gap:8px}
+.alert-title-badge{font-size:11px;font-weight:500;padding:1px 6px;border-radius:4px}
+.alert-title-badge.red{background:rgba(139,32,32,.12);color:#c05050}
+.alert-title-badge.yellow{background:rgba(138,101,0,.12);color:#C4861C}
+.alert-item{font-size:13px;color:var(--text);padding:8px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--border)}
+.alert-item:last-child{border-bottom:none}
+.alert-item span:last-child{font-size:12px;color:var(--text-2)}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--text-3);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-page{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text-2);font-size:14px}
@@ -167,9 +179,9 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 .user-badge-name{font-size:12px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-badge-role{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;flex-shrink:0}
 .user-badge-role.admin{background:var(--admin);color:#7EB3FF}
-.user-badge-role.usuario{background:rgba(80,80,80,.15);color:var(--text-2)}
-.btn-logout{width:100%;background:transparent;color:var(--text-2);border:none;padding:8px 12px;cursor:pointer;font-size:12px;font-family:inherit;transition:color .15s;text-align:left}
-.btn-logout:hover{color:var(--text)}
+.user-badge-role.usuario{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
+.btn-logout{width:100%;background:transparent;color:var(--text-3);border:none;padding:8px 12px;cursor:pointer;font-size:12px;font-family:inherit;transition:color .15s;text-align:left}
+.btn-logout:hover{color:var(--danger)}
 .admin-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--admin);color:#7EB3FF;margin-left:6px;vertical-align:middle}
 /* ── BANNERS ── */
 #store-banner{background:rgba(168,134,113,.08);border-bottom:1px solid rgba(168,134,113,.2);color:var(--text-2);font-size:13px;padding:10px 24px;display:none;align-items:center;gap:12px}
@@ -187,6 +199,13 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
 .reg-section-sep{display:flex;align-items:center;gap:10px;margin:16px 0}
 .reg-section-sep::before,.reg-section-sep::after{content:'';flex:1;border-top:1px solid var(--border)}
 .reg-section-sep span{font-size:11px;color:var(--text-3)}
+/* ── TOGGLE SWITCH ── */
+.toggle-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:24px;transition:.25s}
+.toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:var(--text-3);border-radius:50%;transition:.25s}
+.toggle-switch input:checked+.toggle-slider{background:var(--accent)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px);background:#fff}
 
 /* ── RESPONSIVE TABLES ── */
 @media(max-width:600px){
@@ -224,6 +243,13 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
   .reg-type-grid{grid-template-columns:1fr}
 }
 </style>
+<script>
+(function(){
+  var t=localStorage.getItem('chana-theme');
+  if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+  if(t==='light') document.documentElement.setAttribute('data-theme','light');
+})();
+</script>
 </head>
 <body class="app-hidden">
 
@@ -240,14 +266,14 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
       <div class="auth-logo">CHANA Gestión</div>
       <p class="auth-subtitle">Ingresá con tu cuenta para continuar</p>
       <div class="auth-error" id="auth-error"></div>
-      <form id="auth-form" onsubmit="doLogin(event)">
+      <form id="auth-form" onsubmit="doLogin(event)" autocomplete="off">
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="auth-email" required autocomplete="email">
+          <input type="email" class="form-input" id="auth-email" required autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">Contraseña</label>
-          <input type="password" class="form-input" id="auth-password" required autocomplete="current-password">
+          <input type="password" class="form-input" id="auth-password" required autocomplete="new-password">
         </div>
         <button type="submit" class="btn btn-primary" id="auth-btn" style="width:100%;justify-content:center;margin-top:6px">Ingresar</button>
       </form>
@@ -368,6 +394,11 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
     <div class="user-badge">
       <span class="user-badge-name" id="user-badge-name">Usuario</span>
       <span class="user-badge-role usuario" id="user-badge-role">usuario</span>
+      <button id="btn-theme" onclick="toggleTheme()" title="Cambiar tema"
+        style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:2px;display:flex;align-items:center;flex-shrink:0;transition:color .15s"
+        onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-3)'">
+        <svg id="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+      </button>
     </div>
     <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
   </div>
@@ -672,6 +703,23 @@ body.app-hidden .sidebar,body.app-hidden #menu-btn,body.app-hidden .mob-nav,body
   </div>
 </div>
 
+<!-- Modal Cerrar Sesión -->
+<div class="modal-overlay" id="modal-logout" onclick="if(event.target===this)closeModal('modal-logout')">
+  <div class="modal" style="max-width:360px;width:360px;padding:28px 28px 24px">
+    <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">¿Cerrar sesión?</div>
+    <p style="margin-bottom:24px;color:var(--text-2);font-size:13px">Vas a salir de tu cuenta.</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="closeModal('modal-logout')"
+        style="background:transparent;border:1px solid var(--border);color:var(--text);padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s"
+        onmouseover="this.style.borderColor='var(--border-focus)';this.style.background='var(--surface-2)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">Cancelar</button>
+      <button onclick="confirmarLogout()"
+        style="background:#8B2020;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s"
+        onmouseover="this.style.background='#7A1A1A'" onmouseout="this.style.background='#8B2020'">Cerrar sesión</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── AUTH STATE ───────────────────────────────────────────────────────────────
 let _currentUser = null;  // { id, email, rol, nombre, tipoCuenta, tiendaConfigurada }
@@ -689,12 +737,37 @@ async function api(method, path, body) {
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(path, opts);
-  if (res.status === 401) { doLogout(); throw new Error('Sesión expirada'); }
+  if (res.status === 401) { _performLogout(true); throw new Error('Sesión expirada'); }
   if (!res.ok) throw new Error((await res.json()).error || 'Error');
   return res.json();
 }
 
+// ─── TEMA ─────────────────────────────────────────────────────────────────────
+const SVG_SUN  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+const SVG_MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+
+function initTheme() {
+  const icon = document.getElementById('theme-icon');
+  if (!icon) return;
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  icon.innerHTML = isDark ? SVG_MOON : SVG_SUN;
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const newTheme = isDark ? 'light' : 'dark';
+  if (newTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('chana-theme', newTheme);
+  initTheme();
+}
+
 // ─── LOGIN / LOGOUT ───────────────────────────────────────────────────────────
+let _sessionExpired = false;
+
 async function doLogin(e) {
   e.preventDefault();
   const btn = document.getElementById('auth-btn');
@@ -730,20 +803,50 @@ async function doLogin(e) {
 }
 
 function doLogout() {
+  openModal('modal-logout');
+}
+
+function confirmarLogout() {
+  closeModal('modal-logout');
+  _performLogout(false);
+}
+
+function _performLogout(expired) {
+  _sessionExpired = expired;
   clearToken();
+  localStorage.removeItem('gestion_token');
+  sessionStorage.clear();
   _currentUser = null;
   _bannerHidden = false;
   document.getElementById('user-badge-container').style.display = 'none';
-  showAuthOverlay();
+  showAuthOverlay(expired);
 }
 
 // ─── AUTH OVERLAY VIEWS ───────────────────────────────────────────────────────
-function showAuthOverlay() {
+function showAuthOverlay(sessionExpired) {
   document.body.classList.add('app-hidden');
   document.getElementById('auth-loading').style.display = 'none';
   hideAllAuthViews();
   document.getElementById('auth-form-wrapper').style.display = 'block';
   document.getElementById('auth-overlay').classList.add('open');
+  // Limpiar campos y resetear botón
+  const emailEl = document.getElementById('auth-email');
+  const passEl  = document.getElementById('auth-password');
+  const btnEl   = document.getElementById('auth-btn');
+  if (emailEl) emailEl.value = '';
+  if (passEl)  passEl.value  = '';
+  if (btnEl)  { btnEl.disabled = false; btnEl.textContent = 'Ingresar'; }
+  // Mostrar "Sesión expirada" solo si el token venció durante uso activo
+  const errEl = document.getElementById('auth-error');
+  if (errEl) {
+    if (sessionExpired) {
+      errEl.textContent = 'Tu sesión expiró. Volvé a ingresar.';
+      errEl.style.display = 'block';
+    } else {
+      errEl.textContent = '';
+      errEl.style.display = 'none';
+    }
+  }
 }
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').classList.remove('open');
@@ -895,14 +998,19 @@ function renderSidebar() {
   } else {
     const conTienda = tipoCuenta === 'gestion_tienda';
     html = `
+      <div class="nav-section-label">PRINCIPAL</div>
       ${navItem('dashboard','dashboard','Dashboard')}
+      <div class="nav-section-label">VENTAS</div>
       ${navItem('clientes','clientes','Clientes')}
       ${navItem('ventas','ventas','Ventas')}
-      ${navItem('meses','meses','Balance Mensual')}
       ${navItem('deudas','deudas','Deudas')}
+      <div class="nav-section-label">FINANZAS</div>
       ${navItem('gastos','gastos','Gastos')}
-      ${conTienda ? navItem('stock','stock','Stock & Tienda') : navItem('stock','stock','Stock')}
+      ${navItem('meses','meses','Balance Mensual')}
       ${navItem('resultados','resultados','Resultados')}
+      <div class="nav-section-label">INVENTARIO</div>
+      ${conTienda ? navItem('stock','stock','Stock & Tienda') : navItem('stock','stock','Stock')}
+      <div class="nav-section-label">CUENTA</div>
       ${navItem('config','config','Configuración')}
     `;
   }
@@ -939,11 +1047,14 @@ function showStoreBanner() {
   if (_currentUser.tipoCuenta !== 'gestion_tienda') return;
   if (_currentUser.tiendaConfigurada) return;
   if (_bannerHidden) return;
+  const dismissed = localStorage.getItem('banner_dismissed_until');
+  if (dismissed && Date.now() < parseInt(dismissed, 10)) return;
   const b = document.getElementById('store-banner');
   if (b) b.style.display = 'flex';
 }
 function hideBanner() {
   _bannerHidden = true;
+  localStorage.setItem('banner_dismissed_until', Date.now() + 7 * 24 * 60 * 60 * 1000);
   const b = document.getElementById('store-banner');
   if (b) b.style.display = 'none';
 }
@@ -959,21 +1070,22 @@ function renderUserBadge() {
   roleEl.textContent = rol === 'admin' ? 'admin' : 'usuario';
   roleEl.className = 'user-badge-role ' + rol;
   container.style.display = 'block';
+  initTheme();
 }
 
 // ─── AUTH INIT ────────────────────────────────────────────────────────────────
 async function initAuth() {
   const token = getToken();
-  if (!token) { showAuthOverlay(); return false; }
+  if (!token) { showAuthOverlay(false); return false; }
   try {
     const me = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!me.ok) { doLogout(); return false; }
+    if (!me.ok) { clearToken(); showAuthOverlay(false); return false; }
     _currentUser = (await me.json()).user;
     renderSidebar();
     renderUserBadge();
     showStoreBanner();
     return true;
-  } catch { doLogout(); return false; }
+  } catch { clearToken(); showAuthOverlay(false); return false; }
 }
 
 // ─── IMPERSONACIÓN ────────────────────────────────────────────────────────────
@@ -1168,16 +1280,33 @@ function renderDashboard(){
       <button class="year-btn" onclick="changeYear(1)">▶</button>
     </div>
   </div>
-  ${alerts}
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-value blue">${clientes.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Vendido</div><div class="stat-value green">${fmt(totalVtas)}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Gastos</div><div class="stat-value red">${fmt(totalGastos)}</div></div>
-    <div class="stat-card"><div class="stat-label">Ganancia Neta</div><div class="stat-value ${ganNeta>=0?'green':'red'}">${fmt(ganNeta)}</div></div>
-    <div class="stat-card"><div class="stat-label">Deuda Pendiente</div><div class="stat-value ${totalDeuda>0?'red':'green'}">${fmt(totalDeuda)}</div></div>
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Clientes</div>
+      <div style="font-size:24px;font-weight:600;color:var(--text)">${clientes.length}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Total Vendido</div>
+      <div style="font-size:24px;font-weight:600;color:var(--text)">${fmt(totalVtas)}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Total Gastos</div>
+      <div style="font-size:24px;font-weight:600;color:var(--text)">${fmt(totalGastos)}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Ganancia Neta</div>
+      <div style="font-size:24px;font-weight:600;color:${ganNeta<0?'var(--danger)':'var(--text)'}">${fmt(ganNeta)}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:8px">Deuda Pendiente</div>
+      <div style="font-size:24px;font-weight:600;color:${totalDeuda>0?'var(--danger)':'var(--text)'}">${fmt(totalDeuda)}</div>
+    </div>
   </div>
-  <div class="card">
-    <h3 style="margin-bottom:14px;font-size:15px">Balance por Mes — ${currentYear}</h3>
+  ${alerts}
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)">Balance por Mes — ${currentYear}</span>
+    </div>
     <div class="table-container"><table class="table-responsive">
       <thead><tr><th>Mes</th><th>Ventas</th><th>Ingresos</th><th>Gastos</th><th>Ganancia</th><th>Adeudado</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -1186,8 +1315,13 @@ function renderDashboard(){
   </div>`);
 }
 function alertHTML(type,title,arr){
-  return`<div class="alert-box ${type}"><div class="alert-title ${type}">${title} (${arr.length})</div>`+
-    arr.map(v=>{const c=getCliente(v.clienteId);return`<div class="alert-item"><span>${c?c.nombre:'?'} — ${v.prenda}${(v.cantidad||1)>1?' x'+v.cantidad:''}</span><span>Cuota: ${fmtDate(v.proxCuota)} | Adeuda: ${fmt(v.adeuda)}</span></div>`;}).join('')+`</div>`;
+  const MAX=5;
+  const shown=arr.slice(0,MAX);
+  const extra=arr.length-MAX;
+  const colorClass=type==='red'?'red':'yellow';
+  const rows=shown.map(v=>{const c=getCliente(v.clienteId);return`<div class="alert-item"><span>${c?c.nombre:'?'} — ${v.prenda}${(v.cantidad||1)>1?' x'+v.cantidad:''}</span><span>Cuota: ${fmtDate(v.proxCuota)} | Adeuda: ${fmt(v.adeuda)}</span></div>`;}).join('');
+  const more=extra>0?`<div style="padding-top:8px;font-size:12px;color:var(--text-2)">Ver todas (${arr.length}) →</div>`:'';
+  return`<div class="alert-box ${colorClass}"><div class="alert-title"><span>${title}</span><span class="alert-title-badge ${colorClass}">${arr.length}</span></div>${rows}${more}</div>`;
 }
 function changeYear(d){ currentYear+=d; renderDashboard(); }
 function goToMes(m){ currentMes=m; currentMesYear=currentYear; showPage('meses'); }
@@ -1552,93 +1686,292 @@ function selectResMes(m){resMes=m;renderResultados();}
 function changeResYear(d){resYear+=d;renderResultados();}
 
 // ─── CONFIGURACIÓN ────────────────────────────────────────────────────────────
+let _tgPanelOpen = false;
+
 async function renderConfig(){
-  const cfg=await api('GET','/api/config');
-  const mpConectado=cfg.mpConectado||false;
-  const mpUserId=cfg.mpUserId||'';
-  const lastSync=cfg.mpLastSync?new Date(cfg.mpLastSync).toLocaleString('es-AR'):'Nunca';
-  const esTienda = (_currentUser?.tipoCuenta||'gestion') === 'gestion_tienda';
+  setMain(`<div class="loading-page"><div class="spinner"></div></div>`);
+  const cfg = await api('GET','/api/config');
+  const tgCfg = cfg.telegramConfigurado || false;
+  _tgPanelOpen = tgCfg;
+  const esTienda = (_currentUser?.tipoCuenta || 'gestion') === 'gestion_tienda';
 
   const tiendaSection = esTienda ? `
+  <!-- MI TIENDA ONLINE -->
   <div class="card" style="margin-bottom:18px">
-    <h3 style="margin-bottom:14px;font-size:15px;color:var(--text)">Mi Tienda</h3>
-    <form onsubmit="saveConfig(event)">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">URL de la tienda</label>
-          <input type="url" class="form-input" id="cfg-tienda-url" value="${cfg.tiendaUrl||''}" placeholder="https://chanaindumentaria.vercel.app">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nombre de la tienda</label>
-          <input type="text" class="form-input" id="cfg-tienda-nombre" value="${cfg.tiendaNombre||''}" placeholder="Chana Indumentaria">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Vercel Deploy Hook <span style="color:var(--text-3);font-weight:400">(para publicar stock automáticamente)</span></label>
-        <input type="url" class="form-input" id="cfg-deploy-hook" value="${cfg.vercelDeployHook||''}" placeholder="https://api.vercel.com/v1/integrations/deploy/...">
-        <div style="font-size:11px;color:var(--text-3);margin-top:5px">Vercel Dashboard → tu proyecto → Settings → Git → Deploy Hooks → crear hook "stock" → copiar URL</div>
-      </div>
-      <div class="form-actions" style="justify-content:flex-start">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-      </div>
-    </form>
-    <div id="config-result" style="margin-top:10px"></div>
-  </div>
-
-  <div class="card" style="margin-bottom:18px">
-    <h3 style="margin-bottom:14px;font-size:15px;color:var(--text)">MercadoPago</h3>
-    <div id="mp-connect-panel">
-      <div id="mp-status-text" style="font-size:13px;margin-bottom:12px">
-        ${mpConectado
-          ? `<span style="color:#5CB870"><strong>Conectado</strong> — cuenta MP: ${mpUserId}</span> <span style="color:var(--text-3);font-size:11px"> · Última sync: ${lastSync}</span>`
-          : `<span style="color:var(--text-2)">No conectado. Conectá tu cuenta para sincronizar ventas automáticamente.</span>`}
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button type="button" class="btn btn-primary btn-sm" id="btn-mp-connect" onclick="conectarMP()" style="display:${mpConectado?'none':'inline-flex'}">Conectar MercadoPago</button>
-        <button type="button" class="btn btn-danger btn-sm" id="btn-mp-disconnect" onclick="desconectarMP()" style="display:${mpConectado?'inline-flex':'none'}">Desconectar</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="sincronizarMP()" style="display:${mpConectado?'inline-flex':'none'}">Sincronizar ahora</button>
-      </div>
+    <h3 style="margin-bottom:4px;font-size:15px;font-weight:500;color:var(--text)">Mi Tienda Online</h3>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.6">Configurá los datos de tu tienda y la integración con MercadoPago.</p>
+    <div class="form-group">
+      <label class="form-label">Nombre de la tienda</label>
+      <input type="text" class="form-input" id="cfg-tienda-nombre" value="${(cfg.tiendaNombre||'').replace(/"/g,'&quot;')}" placeholder="Ej: Chana Indumentaria">
     </div>
-    <div id="mp-result" style="margin-top:12px"></div>
+    <div class="form-group">
+      <label class="form-label">URL de la tienda</label>
+      <input type="url" class="form-input" id="cfg-tienda-url" value="${cfg.tiendaUrl||''}" placeholder="https://mi-tienda.vercel.app">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vercel Deploy Hook <span style="color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0">(para publicar stock)</span></label>
+      <input type="url" class="form-input" id="cfg-deploy-hook" value="${cfg.vercelDeployHook||''}" placeholder="https://api.vercel.com/v1/integrations/deploy/...">
+      <div style="font-size:11px;color:var(--text-3);margin-top:4px">Vercel Dashboard → proyecto → Settings → Git → Deploy Hooks → crear hook "stock"</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+      <button type="button" class="btn btn-primary btn-sm" id="btn-save-tienda" onclick="saveTiendaConfig()">Guardar configuración de tienda</button>
+      <div id="tienda-result" style="font-size:13px"></div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">MercadoPago</div>
+      <div style="font-size:13px;margin-bottom:12px">
+        ${cfg.mpConectado
+          ? `<span style="color:#5CB870">Conectado — cuenta MP: ${cfg.mpUserId}</span> <span style="color:var(--text-3);font-size:11px"> · Última sync: ${cfg.mpLastSync ? new Date(cfg.mpLastSync).toLocaleString('es-AR') : 'Nunca'}</span>`
+          : `<span style="color:var(--text-2)">No conectado</span>`}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary btn-sm" id="btn-mp-connect" onclick="conectarMP()" ${cfg.mpConectado?'style="display:none"':''}>Conectar MercadoPago</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btn-mp-disconnect" onclick="desconectarMP()" ${!cfg.mpConectado?'style="display:none"':''}>Desconectar</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="sincronizarMP()" ${!cfg.mpConectado?'style="display:none"':''}>Sincronizar ahora</button>
+      </div>
+      <div id="mp-result" style="margin-top:10px"></div>
+    </div>
   </div>` : '';
 
   setMain(`
-  <div class="page-header"><div><div class="page-title">Configuración</div><div class="page-subtitle">${esTienda?'Tienda y MercadoPago':'Preferencias de cuenta'}</div></div></div>
+  <div class="page-header"><div>
+    <div class="page-title">Configuración</div>
+    <div class="page-subtitle">Notificaciones y datos de cuenta</div>
+  </div></div>
 
   ${tiendaSection}
 
+  <!-- NOTIFICACIONES -->
+  <div class="card" style="margin-bottom:18px">
+    <h3 style="margin-bottom:4px;font-size:15px;font-weight:500;color:var(--text)">Alertas de deudas vencidas</h3>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.6">Recibís alertas cada día a las 9 AM cuando alguna clienta tiene cuotas vencidas.</p>
+
+    <!-- EMAIL -->
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">Email</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--text)">Notificaciones por email</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-alertas-email" ${cfg.alertasEmail !== false ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Email para notificaciones</label>
+        <input type="email" class="form-input" id="cfg-email-alt"
+          value="${cfg.emailAlternativo || ''}"
+          placeholder="${_currentUser?.email || ''}">
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px">Por defecto usamos el email de tu cuenta.</div>
+      </div>
+    </div>
+
+    <!-- TELEGRAM -->
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">Telegram</div>
+      <button type="button" onclick="toggleTelegramPanel()"
+        style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:0;font-size:13px;font-family:inherit;color:${tgCfg ? '#5CB870' : 'var(--accent)'}">
+        <span id="tg-toggle-icon" style="display:inline-block;font-size:10px;line-height:1;transition:transform .2s;transform:${tgCfg ? 'rotate(90deg)' : 'none'}">${tgCfg ? '▶' : '▶'}</span>
+        <span id="tg-toggle-label">${tgCfg ? 'Telegram configurado' : 'Configurar bot de Telegram'}</span>
+      </button>
+
+      <div id="tg-panel" data-configured="${tgCfg}"
+        style="overflow:hidden;max-height:${tgCfg ? '700px' : '0'};transition:max-height .3s ease">
+        <div style="padding-top:14px">
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;line-height:1.6">Si preferís recibir las alertas por Telegram, creá un bot y pegá el token y tu Chat ID acá.</p>
+
+          <div class="form-group">
+            <label class="form-label">Token del bot</label>
+            <div style="position:relative">
+              <input type="password" class="form-input" id="cfg-tg-token"
+                value="${cfg.telegramToken || ''}"
+                placeholder="123456:ABC-DEF1GHI-JKL..."
+                style="padding-right:38px">
+              <button type="button" id="btn-eye-tg" onclick="toggleTgEye()"
+                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);padding:2px;display:flex;align-items:center">
+                <svg id="tg-eye-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Chat ID</label>
+            <input type="text" class="form-input" id="cfg-tg-chatid"
+              value="${cfg.telegramChatId || ''}"
+              placeholder="Ej: 123456789">
+          </div>
+
+          <a href="https://core.telegram.org/bots#botfather" target="_blank" rel="noopener"
+            style="display:inline-block;font-size:12px;color:var(--accent);margin-bottom:16px;text-decoration:none">
+            ¿Cómo crear un bot de Telegram? →
+          </a>
+
+          ${tgCfg ? `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);margin-top:2px;margin-bottom:14px">
+            <span style="font-size:13px;color:var(--text)">Activar notificaciones de Telegram</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cfg-tg-activo" ${cfg.telegramActivo ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>` : ''}
+
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-tg-test" onclick="testTelegram()">Probar conexión</button>
+            <div id="tg-test-result" style="font-size:12px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;display:flex;align-items:center;gap:12px">
+      <button type="button" class="btn btn-primary" id="btn-save-notif" onclick="saveNotifConfig()">Guardar cambios</button>
+      <div id="notif-result" style="font-size:13px"></div>
+    </div>
+  </div>
+
+  <!-- DATOS DE CUENTA -->
   <div class="card">
-    <h3 style="margin-bottom:12px;font-size:15px;color:var(--text)">Notificaciones Telegram</h3>
-    <div class="info-box" style="font-size:12px">
-      Las notificaciones de cuotas por vencer se envían automáticamente cada día a las 9 AM.<br>
-      Para configurar Telegram, agregá <strong>TELEGRAM_TOKEN</strong> y <strong>TELEGRAM_CHAT_ID</strong> como variables de entorno en Vercel.
+    <h3 style="margin-bottom:16px;font-size:15px;font-weight:500;color:var(--text)">Datos de la cuenta</h3>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input type="text" class="form-input" id="cfg-nombre" value="${(_currentUser?.nombre||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" value="${_currentUser?.email||''}" disabled style="opacity:.45;cursor:not-allowed">
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+      <button type="button" class="btn btn-primary" id="btn-save-perfil" onclick="savePerfil()">Guardar cambios</button>
+      <div id="perfil-result" style="font-size:13px"></div>
     </div>
   </div>`);
+}
 
-  // Detectar retorno del OAuth de MP
-  const params=new URLSearchParams(window.location.search);
-  if(params.get('mp_ok')){
-    document.getElementById('mp-result').innerHTML=`<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">MercadoPago conectado correctamente.</div></div>`;
-    history.replaceState({},'',window.location.pathname);
-  }
-  if(params.get('mp_error')){
-    document.getElementById('mp-result').innerHTML=`<div class="alert-box red"><div class="alert-title red">Error al conectar MP: ${params.get('mp_error')}</div></div>`;
-    history.replaceState({},'',window.location.pathname);
+function toggleTelegramPanel() {
+  _tgPanelOpen = !_tgPanelOpen;
+  const panel = document.getElementById('tg-panel');
+  const icon  = document.getElementById('tg-toggle-icon');
+  const label = document.getElementById('tg-toggle-label');
+  if (!panel) return;
+  const isCfg = panel.dataset.configured === 'true';
+  if (_tgPanelOpen) {
+    panel.style.maxHeight = panel.scrollHeight + 200 + 'px';
+    icon.style.transform = 'rotate(90deg)';
+    icon.style.color = isCfg ? '#5CB870' : 'var(--accent)';
+  } else {
+    panel.style.maxHeight = '0';
+    icon.style.transform = 'none';
+    if (isCfg) {
+      icon.parentElement.style.color = '#5CB870';
+      label.textContent = 'Telegram configurado';
+    }
   }
 }
 
-async function saveConfig(e){
-  e.preventDefault();
-  const el=document.getElementById('config-result');
-  try{
-    await api('PUT','/api/config',{
-      tiendaUrl:    document.getElementById('cfg-tienda-url').value.trim(),
-      tiendaNombre: document.getElementById('cfg-tienda-nombre').value.trim(),
-      vercelDeployHook: document.getElementById('cfg-deploy-hook').value.trim(),
+function toggleTgEye() {
+  const input = document.getElementById('cfg-tg-token');
+  const svg   = document.getElementById('tg-eye-svg');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+async function testTelegram() {
+  const token  = document.getElementById('cfg-tg-token')?.value?.trim() || '';
+  const chatId = document.getElementById('cfg-tg-chatid')?.value?.trim() || '';
+  const resEl  = document.getElementById('tg-test-result');
+  const btn    = document.getElementById('btn-tg-test');
+  if (!chatId) { resEl.innerHTML = '<span style="color:var(--danger)">Ingresá el Chat ID</span>'; return; }
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+  try {
+    await api('POST','/api/config/telegram-test', { token: token || undefined, chatId });
+    resEl.innerHTML = '<span style="color:#5CB870">✓ Mensaje enviado correctamente</span>';
+  } catch(e) {
+    resEl.innerHTML = `<span style="color:var(--danger)">${e.message}</span>`;
+  } finally {
+    btn.textContent = 'Probar conexión';
+    btn.disabled = false;
+  }
+}
+
+async function saveNotifConfig() {
+  const btn   = document.getElementById('btn-save-notif');
+  const resEl = document.getElementById('notif-result');
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+  try {
+    await api('PUT','/api/perfil', {
+      alertasEmail:     document.getElementById('cfg-alertas-email')?.checked ?? true,
+      emailAlternativo: document.getElementById('cfg-email-alt')?.value?.trim() || ''
     });
-    el.innerHTML=`<div class="alert-box" style="background:rgba(58,125,68,.1);border:1px solid rgba(58,125,68,.3)"><div class="alert-title" style="color:#5CB870">Configuración guardada</div></div>`;
-  }catch(e2){
-    el.innerHTML=`<div class="alert-box red"><div class="alert-title red">Error: ${e2.message}</div></div>`;
+    const token  = document.getElementById('cfg-tg-token')?.value?.trim() || '';
+    const chatId = document.getElementById('cfg-tg-chatid')?.value?.trim() || '';
+    if (chatId) {
+      const activo = document.getElementById('cfg-tg-activo')?.checked ?? true;
+      await api('POST','/api/config/telegram', { token: token || undefined, chatId, activo });
+      // Marcar panel como configurado
+      const panel = document.getElementById('tg-panel');
+      if (panel) panel.dataset.configured = 'true';
+      const label = document.getElementById('tg-toggle-label');
+      if (label && !_tgPanelOpen) label.textContent = 'Telegram configurado';
+    }
+    resEl.innerHTML = '<span style="color:#5CB870">Guardado ✓</span>';
+    setTimeout(() => { if (resEl) resEl.innerHTML = ''; }, 2000);
+  } catch(e) {
+    resEl.innerHTML = `<span style="color:var(--danger)">${e.message}</span>`;
+  } finally {
+    btn.textContent = 'Guardar cambios';
+    btn.disabled = false;
+  }
+}
+
+async function saveTiendaConfig() {
+  const btn   = document.getElementById('btn-save-tienda');
+  const resEl = document.getElementById('tienda-result');
+  if (!btn) return;
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+  try {
+    await api('PUT', '/api/perfil/tienda', {
+      tiendaNombre:     document.getElementById('cfg-tienda-nombre')?.value?.trim() || '',
+      tiendaUrl:        document.getElementById('cfg-tienda-url')?.value?.trim()    || '',
+      vercelDeployHook: document.getElementById('cfg-deploy-hook')?.value?.trim()  || '',
+    });
+    if (_currentUser) _currentUser.tiendaConfigurada = true;
+    const b = document.getElementById('store-banner');
+    if (b) b.style.display = 'none';
+    resEl.innerHTML = '<span style="color:#5CB870">Guardado ✓</span>';
+    setTimeout(() => { if (resEl) resEl.innerHTML = ''; }, 2000);
+  } catch(e) {
+    resEl.innerHTML = `<span style="color:var(--danger)">${e.message}</span>`;
+  } finally {
+    btn.textContent = 'Guardar configuración de tienda';
+    btn.disabled = false;
+  }
+}
+
+async function savePerfil() {
+  const btn   = document.getElementById('btn-save-perfil');
+  const resEl = document.getElementById('perfil-result');
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+  try {
+    const nombre = document.getElementById('cfg-nombre')?.value?.trim() || '';
+    await api('PUT','/api/perfil', { nombre });
+    if (_currentUser) _currentUser.nombre = nombre;
+    renderUserBadge();
+    resEl.innerHTML = '<span style="color:#5CB870">Guardado ✓</span>';
+    setTimeout(() => { if (resEl) resEl.innerHTML = ''; }, 2000);
+  } catch(e) {
+    resEl.innerHTML = `<span style="color:var(--danger)">${e.message}</span>`;
+  } finally {
+    btn.textContent = 'Guardar cambios';
+    btn.disabled = false;
   }
 }
 
@@ -1792,6 +2125,7 @@ async function submitGasto(e){
 }
 
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const open=document.querySelector('.modal-overlay.open'); if(open) open.classList.remove('open'); } });
 
 // ─── STOCK ────────────────────────────────────────────────────────────────────
 let variantesModalProductoId = null;
@@ -2366,7 +2700,8 @@ async function renderAdminDashboard() {
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
       <div class="stat-card"><div class="stat-label">Usuarios registrados</div><div class="stat-value blue">${stats.totalUsuarios||0}</div></div>
       <div class="stat-card"><div class="stat-label">Activos este mes</div><div class="stat-value green">${stats.activosMes||0}</div></div>
-      <div class="stat-card"><div class="stat-label">Facturado este mes</div><div class="stat-value">${fmt(stats.facturadoMes||0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Facturado este mes</div><div class="stat-value green">${fmt(stats.facturadoMes||0)}</div><div style="font-size:11px;color:var(--text-3);margin-top:4px">solo ventas pagadas</div></div>
+      <div class="stat-card"><div class="stat-label">Pendiente de cobro</div><div class="stat-value orange">${fmt(stats.pendienteCobro||0)}</div><div style="font-size:11px;color:var(--text-3);margin-top:4px">cuotas por cobrar</div></div>
       <div class="stat-card"><div class="stat-label">Ventas online mes</div><div class="stat-value">${fmt(stats.ventasOnlineMes||0)}</div></div>
       <div class="stat-card"><div class="stat-label">Cuentas con tienda</div><div class="stat-value">${stats.cuentasConTienda||0}</div></div>
       <div class="stat-card"><div class="stat-label">MP conectados</div><div class="stat-value">${stats.mpConectados||0}</div></div>
