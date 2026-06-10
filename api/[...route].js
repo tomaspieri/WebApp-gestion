@@ -554,7 +554,7 @@ async function handleLogin(req, res) {
   if (error) return json(res, 401, { error: 'Credenciales incorrectas' });
 
   const { data: perfil } = await adminSupabase
-    .from('perfiles').select('rol, activo, nombre').eq('id', data.user.id).single();
+    .from('perfiles').select('rol, activo, nombre, tipo_cuenta, tienda_configurada').eq('id', data.user.id).single();
 
   if (!perfil?.activo) return json(res, 403, { error: 'Cuenta desactivada' });
 
