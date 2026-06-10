@@ -3400,7 +3400,7 @@ const ALLOWED_CONFIG_FIELDS = [
   'banner_imagen_url','banner_titulo','banner_subtitulo',
   'banner_boton_texto','banner_boton_url','secciones',
   'franja_texto','franja_activa','instagram_url',
-  'whatsapp_numero','envio_gratis_desde','marquee_items',
+  'whatsapp_numero','envio_gratis_desde',
 ];
 
 function sanitizeText(v, maxLen = 500) {
@@ -3444,7 +3444,7 @@ async function handlePutMiTiendaConfig(req, res, user) {
 
   updates.updated_at = new Date().toISOString();
   const { error } = await adminSupabase
-    .from('tienda_config').upsert({ user_id: user.userId, ...updates }, { onConflict: 'user_id' });
+    .from('tienda_config').update(updates).eq('user_id', user.userId);
   if (error) return json(res, 500, { error: 'Error al guardar: ' + error.message });
   return json(res, 200, { ok: true });
 }
