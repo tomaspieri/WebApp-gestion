@@ -113,7 +113,7 @@ CREATE TABLE productos (
 CREATE TABLE producto_variantes (
   id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   producto_id UUID REFERENCES productos(id) ON DELETE CASCADE NOT NULL,
-  tipo        TEXT NOT NULL CHECK (tipo IN ('color', 'talle')),
+  tipo        TEXT NOT NULL CHECK (tipo IN ('color', 'talle', 'unico')),
   nombre      TEXT NOT NULL,
   cantidad    INTEGER DEFAULT 0,
   imagen      TEXT DEFAULT '',
@@ -137,6 +137,60 @@ CREATE TABLE contadores (
   user_id       UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   venta_counter INTEGER DEFAULT 0
 );
+
+-- TIENDA CONFIG (una fila por usuario con cuenta gestion_tienda)
+CREATE TABLE IF NOT EXISTS tienda_config (
+  id                  UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id             UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  nombre_tienda       TEXT DEFAULT '',
+  descripcion         TEXT DEFAULT '',
+  logo_url            TEXT DEFAULT NULL,
+  color_primario      TEXT DEFAULT '#A88671',
+  banner_imagen_url   TEXT DEFAULT NULL,
+  banner_titulo       TEXT DEFAULT '',
+  banner_subtitulo    TEXT DEFAULT '',
+  banner_boton_texto  TEXT DEFAULT 'Ver colección',
+  banner_boton_url    TEXT DEFAULT '/productos',
+  secciones           JSONB DEFAULT '[]',
+  franja_texto        TEXT DEFAULT '',
+  franja_activa       BOOLEAN DEFAULT false,
+  instagram_url       TEXT DEFAULT '',
+  whatsapp_numero     TEXT DEFAULT '',
+  envio_gratis_desde  NUMERIC(12,2) DEFAULT NULL,
+  marquee_items       JSONB DEFAULT '[]',
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE tienda_config ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "usuario gestiona su config" ON tienda_config FOR ALL USING (auth.uid() = user_id);
+ALTER PUBLICATION supabase_realtime ADD TABLE tienda_config;
+
+-- PROMOCIONES (códigos de descuento)
+CREATE TABLE IF NOT EXISTS promociones (
+  id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id          UUID REFERENCES auth.users(id) NOT NULL,
+  nombre           TEXT NOT NULL,
+  tipo             TEXT NOT NULL DEFAULT 'codigo'
+                     CHECK (tipo IN ('codigo','descuento_automatico','envio_gratis')),
+  codigo           TEXT DEFAULT NULL,
+  descuento_tipo   TEXT DEFAULT 'porcentaje'
+                     CHECK (descuento_tipo IN ('porcentaje','fijo')),
+  descuento_valor  NUMERIC(10,2) DEFAULT 0,
+  monto_minimo     NUMERIC(12,2) DEFAULT NULL,
+  aplica_a         TEXT DEFAULT 'todo'
+                     CHECK (aplica_a IN ('todo','categoria','producto')),
+  aplica_a_valor   TEXT DEFAULT NULL,
+  usos_max         INTEGER DEFAULT NULL,
+  usos_actuales    INTEGER DEFAULT 0,
+  activa           BOOLEAN DEFAULT true,
+  fecha_inicio     DATE DEFAULT NULL,
+  fecha_fin        DATE DEFAULT NULL,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE promociones ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "usuario gestiona sus promos" ON promociones FOR ALL USING (auth.uid() = user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS promociones_codigo_unique
+  ON promociones (user_id, codigo)
+  WHERE codigo IS NOT NULL AND activa = true;
 
 -- RATE LIMITING (para login y registro)
 CREATE TABLE rate_limits (
@@ -218,3 +272,69 @@ ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS tienda_configurada BOOLEAN DEFAULT
 INSERT INTO contadores (user_id, venta_counter) VALUES
   ('920a408f-79b7-4fb1-945f-c99eb301b257', 0)
 ON CONFLICT (user_id) DO NOTHING;
+
+-- =============================================================================
+-- CMS TIENDA — tablas para configuración y promociones (FASE 2)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS tienda_config (
+  id                  UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id             UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  nombre_tienda       TEXT DEFAULT '',
+  descripcion         TEXT DEFAULT '',
+  logo_url            TEXT DEFAULT NULL,
+  color_primario      TEXT DEFAULT '#A88671',
+  banner_imagen_url   TEXT DEFAULT NULL,
+  banner_titulo       TEXT DEFAULT '',
+  banner_subtitulo    TEXT DEFAULT '',
+  banner_boton_texto  TEXT DEFAULT 'Ver colección',
+  banner_boton_url    TEXT DEFAULT '/productos.html',
+  secciones           JSONB DEFAULT '[]'::jsonb,
+  franja_texto        TEXT DEFAULT '',
+  franja_activa       BOOLEAN DEFAULT false,
+  instagram_url       TEXT DEFAULT '',
+  whatsapp_numero     TEXT DEFAULT '',
+  envio_gratis_desde  NUMERIC(12,2) DEFAULT NULL,
+  marquee_items       JSONB DEFAULT '[]'::jsonb,
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE tienda_config ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies
+    WHERE tablename='tienda_config'
+    AND policyname='usuario gestiona su config') THEN
+    CREATE POLICY "usuario gestiona su config"
+      ON tienda_config FOR ALL USING (auth.uid()=user_id);
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS promociones (
+  id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id          UUID REFERENCES auth.users(id) NOT NULL,
+  nombre           TEXT NOT NULL DEFAULT '',
+  tipo             TEXT NOT NULL DEFAULT 'codigo'
+                     CHECK (tipo IN ('codigo','descuento_automatico','envio_gratis')),
+  codigo           TEXT DEFAULT NULL,
+  descuento_tipo   TEXT DEFAULT 'porcentaje'
+                     CHECK (descuento_tipo IN ('porcentaje','fijo')),
+  descuento_valor  NUMERIC(10,2) DEFAULT 0,
+  monto_minimo     NUMERIC(12,2) DEFAULT NULL,
+  aplica_a         TEXT DEFAULT 'todo'
+                     CHECK (aplica_a IN ('todo','categoria','producto')),
+  aplica_a_valor   TEXT DEFAULT NULL,
+  usos_max         INTEGER DEFAULT NULL,
+  usos_actuales    INTEGER DEFAULT 0,
+  activa           BOOLEAN DEFAULT true,
+  fecha_inicio     DATE DEFAULT NULL,
+  fecha_fin        DATE DEFAULT NULL,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE promociones ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies
+    WHERE tablename='promociones'
+    AND policyname='usuario gestiona sus promos') THEN
+    CREATE POLICY "usuario gestiona sus promos"
+      ON promociones FOR ALL USING (auth.uid()=user_id);
+  END IF;
+END $$;
