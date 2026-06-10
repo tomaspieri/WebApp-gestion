@@ -278,26 +278,28 @@ ON CONFLICT (user_id) DO NOTHING;
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS tienda_config (
-  id                  UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id             UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
-  nombre_tienda       TEXT DEFAULT '',
-  descripcion         TEXT DEFAULT '',
-  logo_url            TEXT DEFAULT NULL,
-  color_primario      TEXT DEFAULT '#A88671',
-  banner_imagen_url   TEXT DEFAULT NULL,
-  banner_titulo       TEXT DEFAULT '',
-  banner_subtitulo    TEXT DEFAULT '',
-  banner_boton_texto  TEXT DEFAULT 'Ver colección',
-  banner_boton_url    TEXT DEFAULT '/productos.html',
-  secciones           JSONB DEFAULT '[]'::jsonb,
-  franja_texto        TEXT DEFAULT '',
-  franja_activa       BOOLEAN DEFAULT false,
-  instagram_url       TEXT DEFAULT '',
-  whatsapp_numero     TEXT DEFAULT '',
-  envio_gratis_desde  NUMERIC(12,2) DEFAULT NULL,
-  marquee_items       JSONB DEFAULT '[]'::jsonb,
-  updated_at          TIMESTAMPTZ DEFAULT NOW()
+  id                    UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id               UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  nombre_tienda         TEXT DEFAULT '',
+  descripcion           TEXT DEFAULT '',
+  logo_url              TEXT DEFAULT NULL,
+  color_primario        TEXT DEFAULT '#A88671',
+  banner_imagen_url     TEXT DEFAULT NULL,
+  banner_titulo         TEXT DEFAULT '',
+  banner_titulo_partes  JSONB DEFAULT NULL,
+  banner_subtitulo      TEXT DEFAULT '',
+  banner_boton_texto    TEXT DEFAULT 'Ver colección',
+  banner_boton_url      TEXT DEFAULT '/productos.html',
+  secciones             JSONB DEFAULT '[]'::jsonb,
+  franja_texto          TEXT DEFAULT '',
+  franja_activa         BOOLEAN DEFAULT false,
+  instagram_url         TEXT DEFAULT '',
+  whatsapp_numero       TEXT DEFAULT '',
+  envio_gratis_desde    NUMERIC(12,2) DEFAULT NULL,
+  marquee_items         JSONB DEFAULT '[]'::jsonb,
+  updated_at            TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE tienda_config ADD COLUMN IF NOT EXISTS banner_titulo_partes JSONB DEFAULT NULL;
 ALTER TABLE tienda_config ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies

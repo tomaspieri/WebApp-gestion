@@ -2838,26 +2838,27 @@ async function handleTiendaGetConfig(req, res, rawPublicId) {
   if (req.method !== 'GET') return json(res, 405, { error: 'Método no permitido' });
   const perfil = await resolveTiendaUser(rawPublicId);
   if (!perfil) return json(res, 404, { error: 'Tienda no encontrada' });
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
+  res.setHeader('Cache-Control', 'no-store');
   const { data: cfg } = await adminSupabase
     .from('tienda_config').select('*').eq('user_id', perfil.id).single();
   if (!cfg) return json(res, 404, { error: 'Configuración no encontrada' });
   return json(res, 200, {
-    nombre_tienda:        cfg.nombre_tienda || '',
-    descripcion:          cfg.descripcion || '',
-    logo_url:             cfg.logo_url || null,
-    color_primario:       cfg.color_primario || '#A88671',
-    banner_imagen_url:    cfg.banner_imagen_url || null,
-    banner_titulo:        cfg.banner_titulo || '',
-    banner_subtitulo:     cfg.banner_subtitulo || '',
-    banner_boton_texto:   cfg.banner_boton_texto || 'Ver colección',
-    banner_boton_url:     cfg.banner_boton_url || '/productos',
-    secciones:            cfg.secciones || [],
-    franja_texto:         cfg.franja_texto || '',
-    franja_activa:        cfg.franja_activa || false,
-    instagram_url:        cfg.instagram_url || '',
-    whatsapp_numero:      cfg.whatsapp_numero || '',
-    envio_gratis_desde:   cfg.envio_gratis_desde ? parseFloat(cfg.envio_gratis_desde) : null,
+    nombre_tienda:          cfg.nombre_tienda || '',
+    descripcion:            cfg.descripcion || '',
+    logo_url:               cfg.logo_url || null,
+    color_primario:         cfg.color_primario || '#A88671',
+    banner_imagen_url:      cfg.banner_imagen_url || null,
+    banner_titulo:          cfg.banner_titulo || '',
+    banner_titulo_partes:   cfg.banner_titulo_partes || null,
+    banner_subtitulo:       cfg.banner_subtitulo || '',
+    banner_boton_texto:     cfg.banner_boton_texto || 'Ver colección',
+    banner_boton_url:       cfg.banner_boton_url || '/productos',
+    secciones:              cfg.secciones || [],
+    franja_texto:           cfg.franja_texto || '',
+    franja_activa:          cfg.franja_activa || false,
+    instagram_url:          cfg.instagram_url || '',
+    whatsapp_numero:        cfg.whatsapp_numero || '',
+    envio_gratis_desde:     cfg.envio_gratis_desde ? parseFloat(cfg.envio_gratis_desde) : null,
   });
 }
 
@@ -3397,7 +3398,7 @@ async function handleGetMiTiendaConfig(req, res, user) {
 
 const ALLOWED_CONFIG_FIELDS = [
   'nombre_tienda','descripcion','logo_url','color_primario',
-  'banner_imagen_url','banner_titulo','banner_subtitulo',
+  'banner_imagen_url','banner_titulo','banner_titulo_partes','banner_subtitulo',
   'banner_boton_texto','banner_boton_url','secciones',
   'franja_texto','franja_activa','instagram_url',
   'whatsapp_numero','envio_gratis_desde',
@@ -3430,6 +3431,14 @@ async function handlePutMiTiendaConfig(req, res, user) {
     } else if (['banner_boton_url','instagram_url'].includes(field)) {
       if (v && !isValidUrl(v)) return json(res, 400, { error: `URL inválida: ${field}` });
       updates[field] = sanitizeText(v, 300);
+    } else if (field === 'banner_titulo_partes') {
+      if (v === null) { updates[field] = null; continue; }
+      if (!Array.isArray(v)) continue;
+      updates[field] = v.slice(0, 4).map(p => ({
+        texto:   String(p.texto || '').replace(/<[^>]*>/g, '').trim().slice(0, 100),
+        color:   (p.color && /^#[0-9A-Fa-f]{6}$/.test(p.color)) ? p.color : null,
+        italica: !!p.italica,
+      }));
     } else if (['secciones','marquee_items'].includes(field)) {
       if (!Array.isArray(v)) return json(res, 400, { error: `${field} debe ser un array` });
       updates[field] = v.slice(0, 20);
