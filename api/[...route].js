@@ -981,13 +981,14 @@ async function handlePostVariante(req, res, user, productoId) {
 
   const body = await parseBody(req);
   const row = {
-    producto_id: productoId,
-    user_id:     user.userId,
-    tipo:        body.tipo || 'color',
-    nombre:      body.nombre || '',
-    cantidad:    parseInt(body.cantidad) || 0,
-    imagen:      body.imagen || '',
-    color_id:    body.colorId || null
+    producto_id:     productoId,
+    user_id:         user.userId,
+    tipo:            body.tipo || 'color',
+    nombre:          body.nombre || '',
+    cantidad:        parseInt(body.cantidad) || 0,
+    imagen:          body.imagen || '',
+    color_id:        body.colorId || null,
+    precio_variante: body.precio_variante != null ? (parseFloat(body.precio_variante) || null) : null
   };
   const { data, error } = await adminSupabase.from('producto_variantes').insert(row).select().single();
   if (error) return json(res, 500, { error: error.message });
@@ -1728,6 +1729,7 @@ async function handleRegistro(req, res) {
   return json(res, 201, {
     ok: true,
     token: loginData.session.access_token,
+    refreshToken: loginData.session.refresh_token,
     user: { id: userId, email, rol: 'usuario', nombre, tipoCuenta, tiendaConfigurada: !!tiendaConfigurada }
   });
 }

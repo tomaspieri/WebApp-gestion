@@ -938,39 +938,36 @@ input,select,textarea{font-size:16px!important}
         </div>
         <!-- MODO: ATRIBUTOS -->
         <div id="stock-modo-atributos" style="display:none">
-          <!-- Atributo 1 -->
-          <div style="margin-bottom:10px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <input type="text" class="form-input" id="attr1-nombre" placeholder="Nombre (ej: Talle)" style="max-width:140px;font-size:12px" oninput="_syncAttrHeader(1)">
-              <span style="font-size:12px;color:var(--text-3)">Valores:</span>
-            </div>
-            <div id="attr1-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px"></div>
+          <!-- TALLES -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);margin-bottom:6px">Talles</div>
+            <div id="attr1-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;min-height:24px"></div>
             <div style="display:flex;gap:6px;align-items:center">
-              <input type="text" class="form-input" id="attr1-valor-input" placeholder="Ej: S, M, L" style="font-size:12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addAttrValue(1)}">
+              <input type="text" class="form-input" id="attr1-valor-input" placeholder="Ej: S, M, L, XL" style="font-size:12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addAttrValue(1)}">
               <button type="button" class="btn btn-secondary btn-sm" onclick="_addAttrValue(1)" style="white-space:nowrap">+ Agregar</button>
             </div>
           </div>
-          <!-- Atributo 2 (opcional) -->
-          <div id="attr2-section" style="display:none;margin-bottom:10px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <input type="text" class="form-input" id="attr2-nombre" placeholder="Nombre (ej: Color)" style="max-width:140px;font-size:12px" oninput="_syncAttrHeader(2)">
-              <span style="font-size:12px;color:var(--text-3)">Valores:</span>
-              <button type="button" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-3);padding:2px 6px" onclick="_removeAttr2()">Quitar</button>
-            </div>
-            <div id="attr2-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px"></div>
+          <!-- COLOR -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);margin-bottom:6px">Color</div>
+            <div id="attr2-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;min-height:24px"></div>
             <div style="display:flex;gap:6px;align-items:center">
-              <input type="text" class="form-input" id="attr2-valor-input" placeholder="Ej: Negro, Blanco" style="font-size:12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addAttrValue(2)}">
+              <input type="text" class="form-input" id="attr2-valor-input" placeholder="Ej: Negro, Blanco, Azul" style="font-size:12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addAttrValue(2)}">
               <button type="button" class="btn btn-secondary btn-sm" onclick="_addAttrValue(2)" style="white-space:nowrap">+ Agregar</button>
             </div>
           </div>
-          <button type="button" id="btn-agregar-attr2" class="btn btn-secondary btn-sm" onclick="_showAttr2()" style="display:none;margin-bottom:10px;font-size:11px">+ Segundo atributo</button>
           <!-- Tabla de combinaciones -->
           <div id="comb-table-wrap" style="display:none;margin-top:10px;overflow-x:auto">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
-              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)" id="comb-table-header">Combinaciones</span>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:11px;color:var(--text-3)">Aplicar a todas:</span>
-                <input type="number" id="comb-bulk-val" min="0" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)" placeholder="0">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+              <span id="comb-table-header" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)">Combinaciones</span>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text-2)">
+                  <input type="checkbox" id="toggle-precio-variante" onchange="_togglePrecioVariante(this.checked)" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer">
+                  Precio por variante
+                </label>
+                <span style="color:var(--border)">|</span>
+                <span style="font-size:11px;color:var(--text-3)">Aplicar stock:</span>
+                <input type="number" id="comb-bulk-val" min="0" style="width:56px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)" placeholder="0">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="_applyBulk()" style="font-size:11px;padding:3px 8px">Aplicar</button>
               </div>
             </div>
@@ -1651,21 +1648,36 @@ function renderUserBadge() {
 }
 
 // ─── AUTH INIT ────────────────────────────────────────────────────────────────
+async function _fetchConRetry(url, opts, intentos = 3) {
+  for (let i = 0; i < intentos; i++) {
+    try {
+      return await fetch(url, opts);
+    } catch(e) {
+      if (i === intentos - 1) throw e;
+      console.warn(`[initAuth] ${e.message} (intento ${i + 1}/${intentos}), reintentando en ${800 * (i + 1)}ms...`);
+      await new Promise(r => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+}
+
 async function initAuth() {
   let token = getToken();
   if (!token) {
+    console.warn('[initAuth] Sin token, intentando refresh...');
     const refreshed = await tryRefreshToken();
     if (!refreshed) { showAuthOverlay(false); return false; }
     token = getToken();
   }
   try {
-    let me = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    console.log('[initAuth] Token encontrado en', localStorage.getItem('gestion_token') ? 'localStorage' : 'sessionStorage');
+    let me = await _fetchConRetry('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
     if (!me.ok) {
       const refreshed = await tryRefreshToken();
       if (!refreshed) { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
-      me = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+      me = await _fetchConRetry('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + getToken() } });
       if (!me.ok) { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
     }
+    console.log('[initAuth] /api/auth/me OK → usuario restaurado');
     _currentUser = (await me.json()).user;
     setupTokenRefresh();
     renderSidebar();
@@ -1673,7 +1685,15 @@ async function initAuth() {
     showStoreBanner();
     checkAnuncioActivo();
     return true;
-  } catch { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
+  } catch(e) {
+    const esErrorDeRed = e instanceof TypeError || e.name === 'TypeError';
+    if (!esErrorDeRed) {
+      clearToken(); clearRefreshToken();
+    }
+    console.warn('[initAuth] Error:', e.message, esErrorDeRed ? '(error de red — tokens conservados)' : '(error de auth — tokens borrados)');
+    showAuthOverlay(false);
+    return false;
+  }
 }
 
 // ─── IMPERSONACIÓN ────────────────────────────────────────────────────────────
@@ -4786,34 +4806,23 @@ async function sincronizarMP() {
 
 // ── ATRIBUTOS + COMBINACIONES (modal nuevo producto) ─────────────────────────
 let _attr = [
-  { nombre: '', valores: [] },
-  { nombre: '', valores: [] },
+  { nombre: 'Talle', valores: [] },
+  { nombre: 'Color', valores: [] },
 ];
-let _combData = []; // [{ key, nombre, cantidad }]
-let _attr2Visible = false;
+let _combData = []; // [{ key, a1, a2, nombre, cantidad, precioVariante }]
+let _precioVarianteOn = false;
 
 function _resetAtributos() {
-  _attr = [{ nombre: '', valores: [] }, { nombre: '', valores: [] }];
+  _attr = [{ nombre: 'Talle', valores: [] }, { nombre: 'Color', valores: [] }];
   _combData = [];
-  _attr2Visible = false;
-  const a1n = document.getElementById('attr1-nombre');
-  const a2n = document.getElementById('attr2-nombre');
+  _precioVarianteOn = false;
   const a1v = document.getElementById('attr1-valor-input');
   const a2v = document.getElementById('attr2-valor-input');
-  if (a1n) a1n.value = '';
-  if (a2n) a2n.value = '';
+  const tv = document.getElementById('toggle-precio-variante');
   if (a1v) a1v.value = '';
   if (a2v) a2v.value = '';
-  const a2s = document.getElementById('attr2-section');
-  const btn2 = document.getElementById('btn-agregar-attr2');
-  if (a2s) a2s.style.display = 'none';
-  if (btn2) btn2.style.display = 'none';
+  if (tv) tv.checked = false;
   _renderAttrChips(1); _renderAttrChips(2); _rebuildCombTable();
-}
-
-function _syncAttrHeader(n) {
-  _attr[n - 1].nombre = (document.getElementById(`attr${n}-nombre`)?.value || '').trim();
-  _rebuildCombTableHeader();
 }
 
 function _addAttrValue(n) {
@@ -4821,22 +4830,16 @@ function _addAttrValue(n) {
   if (!inp) return;
   const val = inp.value.trim();
   if (!val) return;
-  // Split por coma para agregar múltiples de una vez
   val.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
     if (!_attr[n - 1].valores.includes(v)) _attr[n - 1].valores.push(v);
   });
   inp.value = '';
   _renderAttrChips(n);
   _rebuildCombTable();
-  if (n === 1 && _attr[0].valores.length > 0 && !_attr2Visible) {
-    const btn2 = document.getElementById('btn-agregar-attr2');
-    if (btn2) btn2.style.display = '';
-  }
 }
 
 function _removeAttrValue(n, val) {
   _attr[n - 1].valores = _attr[n - 1].valores.filter(v => v !== val);
-  // Preservar cantidades existentes en _combData
   _renderAttrChips(n);
   _rebuildCombTable();
 }
@@ -4852,48 +4855,36 @@ function _renderAttrChips(n) {
   ).join('');
 }
 
-function _showAttr2() {
-  _attr2Visible = true;
-  const a2s = document.getElementById('attr2-section');
-  const btn2 = document.getElementById('btn-agregar-attr2');
-  if (a2s) a2s.style.display = '';
-  if (btn2) btn2.style.display = 'none';
-}
-
-function _removeAttr2() {
-  _attr2Visible = false;
-  _attr[1] = { nombre: '', valores: [] };
-  const a2s = document.getElementById('attr2-section');
-  const a2n = document.getElementById('attr2-nombre');
-  const a2v = document.getElementById('attr2-valor-input');
-  if (a2s) a2s.style.display = 'none';
-  if (a2n) a2n.value = '';
-  if (a2v) a2v.value = '';
-  const btn2 = document.getElementById('btn-agregar-attr2');
-  if (btn2) btn2.style.display = _attr[0].valores.length > 0 ? '' : 'none';
-  _renderAttrChips(2);
-  _rebuildCombTable();
+function _togglePrecioVariante(on) {
+  _precioVarianteOn = on;
+  _rebuildCombTableHeader();
+  _renderCombRows();
 }
 
 function _rebuildCombTable() {
   const wrap = document.getElementById('comb-table-wrap');
   if (!wrap) return;
-  const v1 = _attr[0].valores;
-  const v2 = _attr[1].valores;
-  if (!v1.length) { wrap.style.display = 'none'; return; }
+  const v1 = _attr[0].valores; // talles
+  const v2 = _attr[1].valores; // colores
+  if (!v1.length && !v2.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = '';
 
-  // Generar combinaciones preservando cantidades existentes
-  const prevMap = Object.fromEntries(_combData.map(c => [c.key, c.cantidad]));
-  if (v2.length) {
-    _combData = v1.flatMap(a => v2.map(b => {
-      const key = `${a}|${b}`;
-      return { key, a1: a, a2: b, nombre: `${a} / ${b}`, cantidad: prevMap[key] ?? 0 };
+  const prevMap = Object.fromEntries(_combData.map(c => [c.key, { cantidad: c.cantidad, precioVariante: c.precioVariante }]));
+  if (v1.length && v2.length) {
+    _combData = v2.flatMap(color => v1.map(talle => {
+      const key = `${talle}|${color}`;
+      const prev = prevMap[key] || {};
+      return { key, a1: talle, a2: color, nombre: `${color} / ${talle}`, cantidad: prev.cantidad ?? 0, precioVariante: prev.precioVariante ?? null };
     }));
+  } else if (v1.length) {
+    _combData = v1.map(talle => {
+      const prev = prevMap[talle] || {};
+      return { key: talle, a1: talle, a2: null, nombre: talle, cantidad: prev.cantidad ?? 0, precioVariante: prev.precioVariante ?? null };
+    });
   } else {
-    _combData = v1.map(a => {
-      const key = a;
-      return { key, a1: a, a2: null, nombre: a, cantidad: prevMap[key] ?? 0 };
+    _combData = v2.map(color => {
+      const prev = prevMap[color] || {};
+      return { key: color, a1: color, a2: null, nombre: color, cantidad: prev.cantidad ?? 0, precioVariante: prev.precioVariante ?? null };
     });
   }
   _rebuildCombTableHeader();
@@ -4903,15 +4894,22 @@ function _rebuildCombTable() {
 function _rebuildCombTableHeader() {
   const thead = document.getElementById('comb-thead');
   if (!thead) return;
-  const n1 = _attr[0].nombre || 'Atributo 1';
-  const n2 = _attr[1].nombre || 'Atributo 2';
+  const hasTalles = _attr[0].valores.length > 0;
+  const hasColores = _attr[1].valores.length > 0;
   const hasA2 = _combData.length > 0 && _combData[0].a2 !== null;
   const headerEl = document.getElementById('comb-table-header');
-  if (headerEl) headerEl.textContent = `${n1}${hasA2 ? ' / ' + n2 : ''} — Stock`;
+  if (headerEl) {
+    if (hasTalles && hasColores) headerEl.textContent = 'Color / Talle — Stock';
+    else if (hasTalles) headerEl.textContent = 'Talles — Stock';
+    else headerEl.textContent = 'Colores — Stock';
+  }
+  const th = 'text-align:left;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)';
+  const thC = 'text-align:center;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)';
   thead.innerHTML = `<tr>
-    <th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">${n1}</th>
-    ${hasA2 ? `<th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">${n2}</th>` : ''}
-    <th style="text-align:center;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">Stock</th>
+    ${hasA2 ? `<th style="${th}">Color</th>` : ''}
+    <th style="${th}">${hasA2 ? 'Talle' : (hasTalles ? 'Talle' : 'Color')}</th>
+    <th style="${thC}">Stock</th>
+    ${_precioVarianteOn ? `<th style="${thC}">Precio</th>` : ''}
   </tr>`;
 }
 
@@ -4919,14 +4917,19 @@ function _renderCombRows() {
   const tbody = document.getElementById('comb-tbody');
   if (!tbody) return;
   const hasA2 = _combData.length > 0 && _combData[0].a2 !== null;
+  const precioBase = parseFloat(document.getElementById('prod-precio')?.value) || 0;
   tbody.innerHTML = _combData.map((c, i) => `
     <tr style="${c.cantidad === 0 ? 'color:var(--text-3)' : ''}">
-      <td style="padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px">${c.a1}</td>
       ${hasA2 ? `<td style="padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px">${c.a2}</td>` : ''}
+      <td style="padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px">${c.a1}</td>
       <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center">
         <input type="number" min="0" value="${c.cantidad}" style="width:64px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)"
           oninput="_combData[${i}].cantidad=parseInt(this.value)||0;this.parentElement.parentElement.style.color=_combData[${i}].cantidad===0?'var(--text-3)':''">
       </td>
+      ${_precioVarianteOn ? `<td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center">
+        <input type="number" min="0" step="0.01" value="${c.precioVariante ?? precioBase}" style="width:84px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)"
+          oninput="_combData[${i}].precioVariante=parseFloat(this.value)||null">
+      </td>` : ''}
     </tr>`).join('');
 }
 
@@ -5164,7 +5167,7 @@ async function submitProducto(e) {
       } else if (stockInlineModo === 'atributos' && _combData.length > 0) {
         const tieneA2 = _combData[0].a2 !== null;
         if (tieneA2) {
-          // Crear variantes de color primero, luego talles vinculados
+          // Color parents + talle children
           const coloresUnicos = [...new Set(_combData.map(c => c.a2))];
           const colorMap = {};
           for (const color of coloresUnicos) {
@@ -5172,11 +5175,17 @@ async function submitProducto(e) {
             colorMap[color] = cv.id;
           }
           await Promise.all(_combData.map(c =>
-            api('POST', `/api/productos/${productId}/variantes`, { tipo: 'talle', nombre: c.a1, cantidad: c.cantidad, imagen: '', colorId: colorMap[c.a2] })
+            api('POST', `/api/productos/${productId}/variantes`, {
+              tipo: 'talle', nombre: c.a1, cantidad: c.cantidad, imagen: '', colorId: colorMap[c.a2],
+              precio_variante: _precioVarianteOn ? (c.precioVariante ?? null) : null
+            })
           ));
         } else {
           await Promise.all(_combData.map(c =>
-            api('POST', `/api/productos/${productId}/variantes`, { tipo: 'talle', nombre: c.a1, cantidad: c.cantidad, imagen: '', colorId: '' })
+            api('POST', `/api/productos/${productId}/variantes`, {
+              tipo: 'talle', nombre: c.a1, cantidad: c.cantidad, imagen: '', colorId: '',
+              precio_variante: _precioVarianteOn ? (c.precioVariante ?? null) : null
+            })
           ));
         }
       }
