@@ -340,3 +340,34 @@ DO $$ BEGIN
       ON promociones FOR ALL USING (auth.uid()=user_id);
   END IF;
 END $$;
+
+-- ── MIGRACIÓN V7: categorias_producto ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS categorias_producto (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  nombre     TEXT NOT NULL CHECK (char_length(trim(nombre)) BETWEEN 1 AND 60),
+  orden      INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, nombre)
+);
+ALTER TABLE categorias_producto ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='categorias_producto' AND policyname='usuario ve sus categorias') THEN
+    CREATE POLICY "usuario ve sus categorias" ON categorias_producto FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='categorias_producto' AND policyname='usuario gestiona sus categorias') THEN
+    CREATE POLICY "usuario gestiona sus categorias" ON categorias_producto FOR ALL USING (auth.uid() = user_id);
+  END IF;
+END $$;
+
+-- Poblar categorias_producto desde productos existentes
+INSERT INTO categorias_producto (user_id, nombre, orden)
+SELECT DISTINCT user_id, categoria, 0
+FROM productos
+WHERE categoria IS NOT NULL AND trim(categoria) <> ''
+ON CONFLICT (user_id, nombre) DO NOTHING;
+
+-- banner_titulo_partes en tienda_config
+ALTER TABLE tienda_config ADD COLUMN IF NOT EXISTS banner_titulo_partes JSONB DEFAULT NULL;

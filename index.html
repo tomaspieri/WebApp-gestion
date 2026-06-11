@@ -874,15 +874,9 @@ input,select,textarea{font-size:16px!important}
         </div>
         <div class="form-group">
           <label class="form-label">Categoría</label>
-          <select class="form-input" id="prod-categoria">
+          <select class="form-input" id="prod-categoria" onchange="if(this.value==='__nueva__')_crearCategoriaAlVuelo(this)">
             <option value="">Sin categoría</option>
-            <option value="Abrigos">Abrigos</option>
-            <option value="Pantalones">Pantalones</option>
-            <option value="Camisas & Chalecos">Camisas &amp; Chalecos</option>
-            <option value="Remeras & Bodies">Remeras &amp; Bodies</option>
-            <option value="Vestidos & Faldas">Vestidos &amp; Faldas</option>
-            <option value="Accesorios">Accesorios</option>
-            <option value="St. Marie & Importados">St. Marie &amp; Importados</option>
+            <option value="__nueva__">+ Nueva categoría...</option>
           </select>
         </div>
       </div>
@@ -1687,7 +1681,7 @@ async function loadAll() {
     api('GET', '/api/ventas'),
     api('GET', '/api/gastos'),
   ];
-  if (tipoCuenta === 'gestion_tienda') promises.push(api('GET', '/api/productos'));
+  promises.push(api('GET', '/api/productos'));
   const results = await Promise.all(promises);
   clientes  = results[0];
   ventas    = results[1];
@@ -4411,9 +4405,9 @@ function renderTallesInline() {
   const lista = document.getElementById('stock-talles-lista');
   if (!lista) return;
   lista.innerHTML = stockInlineVariantes.map((v, i) =>
-    `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-2,#efefef);padding:4px 10px;border-radius:20px;font-size:13px">
+    `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">
       ${v.nombre} (${v.cantidad})
-      <button type="button" onclick="eliminarTalleInline(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;line-height:1;padding:0">×</button>
+      <button type="button" onclick="eliminarTalleInline(${i})" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.75;font-size:14px;line-height:1;padding:0">×</button>
     </span>`
   ).join('');
 }
@@ -4597,6 +4591,7 @@ function renderStock() {
     <div class="stat-card"><div class="stat-label">Alertas sin stock</div><div class="stat-value ${alertas>0?'red':'green'}">${alertas}</div></div>
     <div class="stat-card"><div class="stat-label">Valor del stock</div><div class="stat-value green">${fmt(totalValor)}</div></div>
   </div>
+  <div id="categorias-section" style="margin-bottom:16px"></div>
   <div class="card">
     <div class="table-container">
       <table class="table-responsive">
@@ -4606,6 +4601,7 @@ function renderStock() {
     </div>
   </div>
   `);
+  renderCategoriasSection();
 }
 
 
@@ -4643,12 +4639,161 @@ async function sincronizarMP() {
 }
 
 
-function abrirModalProducto(id = null) {
+// ── CATEGORÍAS DE PRODUCTOS ───────────────────────────────────────────────────
+let _categoriaCache = null;
+
+async function _fetchCategorias(force = false) {
+  if (_categoriaCache && !force) return _categoriaCache;
+  try {
+    const r = await api('GET', '/api/gestion/categorias');
+    _categoriaCache = r.categorias || [];
+  } catch { _categoriaCache = []; }
+  return _categoriaCache;
+}
+
+async function _cargarCategoriasEnSelect(valorActual = '') {
+  const select = document.getElementById('prod-categoria');
+  if (!select) return;
+  const cats = await _fetchCategorias();
+  const opciones = cats.map(c => `<option value="${c.nombre.replace(/"/g,'&quot;')}"${c.nombre===valorActual?' selected':''}>${c.nombre}</option>`).join('');
+  select.innerHTML = `<option value="">Sin categoría</option>${opciones}<option value="__nueva__">+ Nueva categoría...</option>`;
+  if (valorActual && !cats.find(c => c.nombre === valorActual)) {
+    select.innerHTML += `<option value="${valorActual.replace(/"/g,'&quot;')}" selected>${valorActual}</option>`;
+    select.value = valorActual;
+  }
+}
+
+async function _crearCategoriaAlVuelo(select) {
+  const nombre = (prompt('Nombre de la nueva categoría:') || '').trim().slice(0, 60);
+  if (!nombre) { select.value = ''; return; }
+  try {
+    const r = await api('POST', '/api/gestion/categorias', { nombre });
+    _categoriaCache = null;
+    const cats = await _fetchCategorias();
+    const opciones = cats.map(c => `<option value="${c.nombre.replace(/"/g,'&quot;')}"${c.nombre===nombre?' selected':''}>${c.nombre}</option>`).join('');
+    select.innerHTML = `<option value="">Sin categoría</option>${opciones}<option value="__nueva__">+ Nueva categoría...</option>`;
+    select.value = nombre;
+    const sec = document.getElementById('categorias-section');
+    if (sec) renderCategoriasSection();
+  } catch(e) {
+    alert('Error al crear la categoría: ' + e.message);
+    select.value = '';
+  }
+}
+
+async function renderCategoriasSection() {
+  const sec = document.getElementById('categorias-section');
+  if (!sec) return;
+  const cats = await _fetchCategorias(true);
+  const isOpen = sec.dataset.open === '1';
+
+  const filasCats = cats.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)" id="cat-row-${c.id}">
+      <span style="flex:1;font-size:13px" id="cat-label-${c.id}">${c.nombre}</span>
+      <button class="btn btn-secondary btn-sm" onclick="_renombrarCategoria('${c.id}','${c.nombre.replace(/'/g,"\\'")}')">Renombrar</button>
+      <button class="btn btn-secondary btn-sm" onclick="_moverCatOrden('${c.id}',${i},-1)" ${i===0?'disabled':''}>▲</button>
+      <button class="btn btn-secondary btn-sm" onclick="_moverCatOrden('${c.id}',${i},1)" ${i===cats.length-1?'disabled':''}>▼</button>
+      <button class="btn btn-danger btn-sm" onclick="_eliminarCategoria('${c.id}','${c.nombre.replace(/'/g,"\\'")}')">×</button>
+    </div>`).join('');
+
+  sec.innerHTML = `
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none" onclick="this.parentElement.dataset.open=this.parentElement.dataset.open==='1'?'0':'1';renderCategoriasSection()">
+      <div>
+        <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)">Categorías de productos</div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:2px">Cada cuenta tiene las suyas. ${cats.length} categoría${cats.length!==1?'s':''}</div>
+      </div>
+      <span style="font-size:18px;color:var(--text-3)">${isOpen?'▲':'▼'}</span>
+    </div>
+    ${isOpen ? `<div style="padding:0 18px 14px">
+      ${cats.length ? filasCats : '<div style="font-size:13px;color:var(--text-3);padding:8px 0">Sin categorías. Agregá la primera.</div>'}
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <input type="text" class="form-input" id="nueva-cat-input" placeholder="Nueva categoría..." maxlength="60" style="flex:1;min-width:180px" onkeydown="if(event.key==='Enter'){event.preventDefault();_agregarCategoriaDesdeSeccion()}">
+        <button class="btn btn-primary" style="font-size:12px;white-space:nowrap" onclick="_agregarCategoriaDesdeSeccion()">+ Agregar</button>
+      </div>
+      <span id="cat-msg" style="font-size:12px;color:var(--text-3);display:block;margin-top:6px"></span>
+    </div>` : ''}
+  </div>`;
+  if (isOpen) sec.dataset.open = '1';
+}
+
+async function _agregarCategoriaDesdeSeccion() {
+  const inp = document.getElementById('nueva-cat-input');
+  const msg = document.getElementById('cat-msg');
+  const nombre = (inp?.value || '').trim().slice(0, 60);
+  if (!nombre) return;
+  try {
+    await api('POST', '/api/gestion/categorias', { nombre });
+    _categoriaCache = null;
+    if (inp) inp.value = '';
+    if (msg) msg.textContent = `"${nombre}" agregada.`;
+    renderCategoriasSection();
+  } catch(e) {
+    if (msg) msg.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function _renombrarCategoria(id, nombreActual) {
+  const nuevo = (prompt('Nuevo nombre:', nombreActual) || '').trim().slice(0, 60);
+  if (!nuevo || nuevo === nombreActual) return;
+  try {
+    await api('PUT', `/api/gestion/categorias/${id}`, { nombre: nuevo });
+    _categoriaCache = null;
+    // Actualizar localmente productos que tenían la categoría anterior
+    productos.forEach(p => { if (p.categoria === nombreActual) p.categoria = nuevo; });
+    renderCategoriasSection();
+    showToast(`Categoría renombrada a "${nuevo}".`);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function _moverCatOrden(id, idx, delta) {
+  const cats = _categoriaCache || [];
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= cats.length) return;
+  // Intercambiar órdenes
+  const a = cats[idx], b = cats[newIdx];
+  try {
+    await Promise.all([
+      api('PUT', `/api/gestion/categorias/${a.id}`, { orden: b.orden }),
+      api('PUT', `/api/gestion/categorias/${b.id}`, { orden: a.orden }),
+    ]);
+    _categoriaCache = null;
+    renderCategoriasSection();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function _eliminarCategoria(id, nombre) {
+  try {
+    await api('DELETE', `/api/gestion/categorias/${id}`);
+    _categoriaCache = null;
+    productos.forEach(p => { if (p.categoria === nombre) p.categoria = null; });
+    renderCategoriasSection();
+    showToast(`Categoría "${nombre}" eliminada.`);
+  } catch(e) {
+    const msg = e.message || '';
+    if (msg.startsWith('TIENE_PRODUCTOS:')) {
+      const count = parseInt(msg.split(':')[1]) || 0;
+      if (!confirm(`La categoría "${nombre}" la usan ${count} producto(s). Si la eliminás, quedarán sin categoría. ¿Confirmar?`)) return;
+      try {
+        await api('DELETE', `/api/gestion/categorias/${id}?force=true`);
+        _categoriaCache = null;
+        productos.forEach(p => { if (p.categoria === nombre) p.categoria = null; });
+        renderCategoriasSection();
+        showToast(`Categoría "${nombre}" eliminada.`);
+      } catch(e2) { alert('Error: ' + e2.message); }
+    } else {
+      alert('Error: ' + msg);
+    }
+  }
+}
+
+async function abrirModalProducto(id = null) {
   document.getElementById('form-producto').reset();
   document.getElementById('producto-id').value = '';
   document.getElementById('modal-producto-title').textContent = 'Nuevo Producto';
   document.getElementById('prod-nuevo').checked = false;
   resetImageState();
+  await _cargarCategoriasEnSelect(id ? (productos.find(x=>x.id===id)?.categoria || '') : '');
   // Reset stock inline state
   stockInlineModo = null;
   stockInlineVariantes = [];
@@ -4733,12 +4878,17 @@ async function submitProducto(e) {
     }
 
     let finalImages = [...prodExistingImages];
+    let uploadWarning = null;
     if (prodNewFiles.length > 0) {
       btn.innerHTML = 'Subiendo...';
       const uploadedUrls = [];
       for (const file of prodNewFiles) {
-        const url = await uploadImageToStorage(file, productId);
-        uploadedUrls.push(url);
+        try {
+          const url = await uploadImageToStorage(file, productId);
+          uploadedUrls.push(url);
+        } catch (uploadErr) {
+          uploadWarning = `Algunas fotos no se pudieron subir: ${uploadErr.message}`;
+        }
       }
       finalImages = [...finalImages, ...uploadedUrls];
     }
@@ -4753,6 +4903,8 @@ async function submitProducto(e) {
 
     closeModal('modal-producto');
     showToast(id ? 'Producto actualizado.' : 'Producto guardado correctamente.');
+    if (uploadWarning) showToast(uploadWarning, 6000);
+    if (window.innerWidth <= 768) window.scrollTo({ top: 0, behavior: 'smooth' });
     await showPage('stock');
   } catch (err) {
     showFormError(e.target, err.message);
@@ -5021,10 +5173,46 @@ let _miTiendaConfig  = null;
 let _miTiendaTab     = 'apariencia';
 let _promosCache     = [];
 
+async function handleActivarTiendaFlow() {
+  const confirmEl = document.getElementById('activar-tienda-confirm');
+  if (confirmEl) confirmEl.style.display = 'none';
+  const btn = document.getElementById('btn-confirmar-activar-tienda');
+  if (btn) { btn.disabled = true; btn.textContent = 'Activando...'; }
+  try {
+    const r = await api('POST', '/api/auth/activar-tienda');
+    if (r.ok) {
+      _currentUser.tipoCuenta = 'gestion_tienda';
+      _currentUser.tiendaPublicId = r.tiendaPublicId;
+      renderSidebar();
+      await loadAll();
+      showToast('Tienda activada. Ya podés configurarla desde Mi Tienda.');
+      await renderMiTienda();
+    }
+  } catch(err) {
+    showToast('Error al activar la tienda: ' + err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar activación'; }
+  }
+}
+
 async function renderMiTienda() {
   const tipoCuenta = _currentUser?.tipoCuenta || 'gestion';
   if (tipoCuenta !== 'gestion_tienda') {
-    setMain('<div class="empty-state"><div class="empty-state-text">Esta sección requiere una cuenta Gestión + Tienda.</div></div>');
+    setMain(`
+    <div class="page-header">
+      <div><div class="page-title">Mi Tienda</div><div class="page-subtitle">Tienda online vinculada a tu cuenta</div></div>
+    </div>
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px">
+      <span style="font-size:14px;color:var(--text-2)">Tu cuenta es de gestión de inventario. ¿Querés también una tienda online?</span>
+      <button class="btn btn-primary" style="white-space:nowrap" onclick="document.getElementById('activar-tienda-confirm').style.display='block'">Activar tienda online</button>
+    </div>
+    <div id="activar-tienda-confirm" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;max-width:480px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:10px">Activar tienda online</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;line-height:1.6">Al activar la tienda, tendrás acceso al panel Mi Tienda para configurar y publicar tus productos online.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="document.getElementById('activar-tienda-confirm').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" id="btn-confirmar-activar-tienda" onclick="handleActivarTiendaFlow()">Confirmar activación</button>
+      </div>
+    </div>`);
     return;
   }
 
@@ -5752,7 +5940,9 @@ function renderStockSinTienda() {
     <div><div class="page-title">Stock</div><div class="page-subtitle">Inventario de productos</div></div>
     <button class="btn btn-success" onclick="abrirModalProducto()">+ Nuevo Producto</button>
   </div>
+  <div id="categorias-section" style="margin-bottom:16px"></div>
   ${renderStockTable()}`);
+  renderCategoriasSection();
 }
 
 function renderStockTable() {

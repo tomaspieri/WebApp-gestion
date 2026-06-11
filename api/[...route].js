@@ -368,6 +368,7 @@ module.exports = async function handler(req, res) {
   if (method === 'POST' && p === 'run-migration-v4') return handleMigrationV4(req, res);
   if (method === 'POST' && p === 'run-migration-v5') return handleMigrationV5(req, res);
   if (method === 'POST' && p === 'run-migration-v6') return handleMigrationV6(req, res);
+  if (method === 'POST' && p === 'run-migration-v7') return handleMigrationV7(req, res);
 
   // Anuncios — ruta pública
   if (method === 'GET' && p === 'anuncios/activo') return handleGetAnuncioActivo(req, res);
@@ -514,6 +515,15 @@ module.exports = async function handler(req, res) {
   // Producto PATCH (destacado / orden)
   if (method === 'PATCH'  && segments[0] === 'productos' && segments[1] && !segments[2])
     return handlePatchProducto(req, res, user, segments[1]);
+
+  // Activar tienda (gestion → gestion_tienda)
+  if (method === 'POST' && p === 'auth/activar-tienda') return handleActivarTienda(req, res, user);
+
+  // Categorías de productos (por usuario)
+  if (method === 'GET'    && p === 'gestion/categorias')                                        return handleGetCategorias(req, res, user);
+  if (method === 'POST'   && p === 'gestion/categorias')                                        return handlePostCategoria(req, res, user);
+  if ((method==='PUT'||method==='PATCH') && segments[0]==='gestion' && segments[1]==='categorias' && segments[2] && !segments[3]) return handlePutCategoria(req, res, user, segments[2]);
+  if (method === 'DELETE' && segments[0]==='gestion' && segments[1]==='categorias' && segments[2] && !segments[3]) return handleDeleteCategoria(req, res, user, segments[2]);
 
   // MP OAuth
   if (method === 'GET'  && p === 'mp/connect')         return handleMpConnect(req, res, user);
@@ -3537,4 +3547,185 @@ async function handlePatchProducto(req, res, user, id) {
     .update(updates).eq('id', id).eq('user_id', user.userId);
   if (error) return json(res, 500, { error: error.message });
   return json(res, 200, { ok: true });
+}
+
+// ── ACTIVAR TIENDA ────────────────────────────────────────────────────────────
+async function handleActivarTienda(req, res, user) {
+  const rl = await rateLimit(`activar-tienda:${user.userId}`, 3, 3600000);
+  if (!rl) return json(res, 429, { error: 'Demasiados intentos. Esperá una hora.' });
+
+  // Verificar que la cuenta es actualmente solo-gestión
+  const { data: perfil } = await adminSupabase
+    .from('perfiles').select('tipo_cuenta, tienda_public_id').eq('id', user.userId).single();
+  if (!perfil) return json(res, 404, { error: 'Perfil no encontrado' });
+  if (perfil.tipo_cuenta === 'gestion_tienda') return json(res, 200, { ok: true, yaActiva: true, tiendaPublicId: perfil.tienda_public_id });
+
+  const tiendaPublicId = perfil.tienda_public_id || crypto.randomBytes(16).toString('hex');
+  const { error } = await adminSupabase
+    .from('perfiles')
+    .update({ tipo_cuenta: 'gestion_tienda', tienda_public_id: tiendaPublicId })
+    .eq('id', user.userId);
+  if (error) return json(res, 500, { error: error.message });
+
+  logActividad(user.userId, user.email, 'tienda_activada', 'Tienda online activada').catch(() => {});
+  return json(res, 200, { ok: true, tiendaPublicId });
+}
+
+// ── CATEGORÍAS DE PRODUCTOS POR USUARIO ───────────────────────────────────────
+async function handleGetCategorias(req, res, user) {
+  const { data, error } = await adminSupabase
+    .from('categorias_producto')
+    .select('id, nombre, orden')
+    .eq('user_id', user.userId)
+    .order('orden', { ascending: true })
+    .order('nombre', { ascending: true });
+  if (error) return json(res, 500, { error: error.message });
+  return json(res, 200, { categorias: data || [] });
+}
+
+async function handlePostCategoria(req, res, user) {
+  const body = await parseBody(req);
+  const nombre = String(body.nombre || '').replace(/<[^>]*>/g, '').trim().slice(0, 60);
+  if (!nombre) return json(res, 400, { error: 'Nombre requerido' });
+
+  // Calcular el próximo orden
+  const { data: last } = await adminSupabase
+    .from('categorias_producto')
+    .select('orden')
+    .eq('user_id', user.userId)
+    .order('orden', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const orden = last ? (last.orden + 1) : 0;
+
+  const { data, error } = await adminSupabase
+    .from('categorias_producto')
+    .insert({ user_id: user.userId, nombre, orden })
+    .select('id, nombre, orden')
+    .single();
+  if (error) {
+    if (error.code === '23505') return json(res, 400, { error: 'Ya existe una categoría con ese nombre' });
+    return json(res, 500, { error: error.message });
+  }
+  return json(res, 201, { categoria: data });
+}
+
+async function handlePutCategoria(req, res, user, id) {
+  const body = await parseBody(req);
+  const updates = {};
+
+  if (body.nombre !== undefined) {
+    const nombre = String(body.nombre || '').replace(/<[^>]*>/g, '').trim().slice(0, 60);
+    if (!nombre) return json(res, 400, { error: 'Nombre requerido' });
+
+    // Obtener nombre anterior para actualizar productos
+    const { data: cat } = await adminSupabase
+      .from('categorias_producto').select('nombre').eq('id', id).eq('user_id', user.userId).single();
+    if (!cat) return json(res, 404, { error: 'Categoría no encontrada' });
+
+    if (cat.nombre !== nombre) {
+      // Renombrar categoría en productos
+      await adminSupabase.from('productos')
+        .update({ categoria: nombre })
+        .eq('user_id', user.userId)
+        .eq('categoria', cat.nombre);
+    }
+    updates.nombre = nombre;
+  }
+  if (body.orden !== undefined) updates.orden = parseInt(body.orden) || 0;
+  if (!Object.keys(updates).length) return json(res, 400, { error: 'Sin cambios' });
+
+  const { error } = await adminSupabase
+    .from('categorias_producto').update(updates).eq('id', id).eq('user_id', user.userId);
+  if (error) {
+    if (error.code === '23505') return json(res, 400, { error: 'Ya existe una categoría con ese nombre' });
+    return json(res, 500, { error: error.message });
+  }
+  return json(res, 200, { ok: true });
+}
+
+async function handleDeleteCategoria(req, res, user, id) {
+  const { searchParams } = new URL(req.url, 'http://l');
+  const force = searchParams.get('force') === 'true';
+
+  // Obtener nombre de la categoría
+  const { data: cat } = await adminSupabase
+    .from('categorias_producto').select('nombre').eq('id', id).eq('user_id', user.userId).single();
+  if (!cat) return json(res, 404, { error: 'Categoría no encontrada' });
+
+  // Contar productos que la usan
+  const { count } = await adminSupabase
+    .from('productos')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.userId)
+    .eq('categoria', cat.nombre);
+
+  if ((count || 0) > 0 && !force) {
+    return json(res, 409, { ok: false, error: `TIENE_PRODUCTOS:${count}`, productos_afectados: count, nombre: cat.nombre });
+  }
+
+  if ((count || 0) > 0) {
+    await adminSupabase.from('productos')
+      .update({ categoria: null })
+      .eq('user_id', user.userId)
+      .eq('categoria', cat.nombre);
+  }
+  const { error } = await adminSupabase
+    .from('categorias_producto').delete().eq('id', id).eq('user_id', user.userId);
+  if (error) return json(res, 500, { error: error.message });
+  return json(res, 200, { ok: true });
+}
+
+// ── MIGRACIÓN V7 — categorias_producto + activar tienda ──────────────────────
+async function handleMigrationV7(req, res) {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers['authorization'] || '';
+  if (!secret || auth !== `Bearer ${secret}`) return json(res, 401, { error: 'Unauthorized' });
+
+  const steps = [];
+  async function exec(label, sql) {
+    try {
+      const { error } = await adminSupabase.rpc('exec_sql', { sql });
+      if (error) throw error;
+      steps.push({ ok: true, label });
+    } catch(e) { steps.push({ ok: false, label, error: e.message }); }
+  }
+
+  await exec('CREATE categorias_producto', `
+    CREATE TABLE IF NOT EXISTS categorias_producto (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      nombre     TEXT NOT NULL CHECK (char_length(trim(nombre)) BETWEEN 1 AND 60),
+      orden      INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(user_id, nombre)
+    )
+  `);
+  await exec('RLS categorias_producto', `ALTER TABLE categorias_producto ENABLE ROW LEVEL SECURITY`);
+  await exec('POLICY categorias_producto select', `
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='categorias_producto' AND policyname='usuario ve sus categorias') THEN
+        CREATE POLICY "usuario ve sus categorias" ON categorias_producto FOR SELECT USING (auth.uid() = user_id);
+      END IF;
+    END $$
+  `);
+  await exec('POLICY categorias_producto all', `
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='categorias_producto' AND policyname='usuario gestiona sus categorias') THEN
+        CREATE POLICY "usuario gestiona sus categorias" ON categorias_producto FOR ALL USING (auth.uid() = user_id);
+      END IF;
+    END $$
+  `);
+  await exec('Seed categorias desde productos', `
+    INSERT INTO categorias_producto (user_id, nombre, orden)
+    SELECT DISTINCT user_id, categoria, 0
+    FROM productos
+    WHERE categoria IS NOT NULL AND trim(categoria) <> ''
+    ON CONFLICT (user_id, nombre) DO NOTHING
+  `);
+  await exec('banner_titulo_partes en tienda_config', `
+    ALTER TABLE tienda_config ADD COLUMN IF NOT EXISTS banner_titulo_partes JSONB DEFAULT NULL
+  `);
+
+  return json(res, 200, { steps });
 }
