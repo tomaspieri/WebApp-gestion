@@ -76,6 +76,7 @@ th{padding:10px 16px;text-align:left;font-weight:400;color:var(--text-2);font-si
 td{padding:10px 16px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--surface-2)}
+.stock-row:hover td{background:var(--surface-2);cursor:pointer}
 tfoot tr td{font-weight:600;color:var(--text);border-top:1px solid var(--border)}
 /* ── BADGES ── */
 .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
@@ -465,7 +466,7 @@ input,select,textarea{font-size:16px!important}
           <input type="password" class="form-input" id="auth-password" required autocomplete="new-password">
         </div>
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);cursor:pointer;margin-top:4px">
-          <input type="checkbox" id="login-recordarme" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+          <input type="checkbox" id="login-recordarme" checked style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
           Recordarme
         </label>
         <button type="submit" class="btn btn-primary" id="auth-btn" style="width:100%;justify-content:center;margin-top:6px">Ingresar</button>
@@ -922,31 +923,62 @@ input,select,textarea{font-size:16px!important}
         <input type="checkbox" id="prod-nuevo" style="width:18px;height:18px;cursor:pointer">
         <label for="prod-nuevo" class="form-label" style="margin:0;cursor:pointer">Marcar como NUEVO en la tienda</label>
       </div>
-      <div class="form-group" id="seccion-stock-inline" style="border:1px solid var(--border,#e5e5e5);border-radius:8px;padding:12px">
+      <div class="form-group" id="seccion-stock-inline" style="border:1px solid var(--border);border-radius:8px;padding:12px">
         <label class="form-label" style="margin-bottom:10px">Stock inicial <span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">(opcional)</span></label>
         <div style="display:flex;gap:6px;margin-bottom:12px">
           <button type="button" class="btn btn-secondary" id="btn-modo-unico" onclick="setModoVariante('unico')" style="flex:1;font-size:12px">Sin variantes – solo cantidad</button>
-          <button type="button" class="btn btn-secondary" id="btn-modo-talles" onclick="setModoVariante('talles')" style="flex:1;font-size:12px">Por talle/color</button>
+          <button type="button" class="btn btn-secondary" id="btn-modo-atributos" onclick="setModoVariante('atributos')" style="flex:1;font-size:12px">Por talle / color</button>
         </div>
+        <!-- MODO: SIN VARIANTES -->
         <div id="stock-modo-unico" style="display:none">
           <div class="form-group" style="margin:0">
             <label class="form-label">Cantidad</label>
             <input type="number" class="form-input" id="stock-unico-cantidad" placeholder="0" min="0" step="1">
           </div>
         </div>
-        <div id="stock-modo-talles" style="display:none">
-          <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
-            <div class="form-group" style="margin:0;flex:1">
-              <label class="form-label">Talle</label>
-              <input type="text" class="form-input" id="stock-talle-nombre" placeholder="S, M, L, XL...">
+        <!-- MODO: ATRIBUTOS -->
+        <div id="stock-modo-atributos" style="display:none">
+          <!-- Atributo 1 -->
+          <div style="margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <input type="text" class="form-input" id="attr1-nombre" placeholder="Nombre (ej: Talle)" style="max-width:140px;font-size:12px" oninput="_syncAttrHeader(1)">
+              <span style="font-size:12px;color:var(--text-3)">Valores:</span>
             </div>
-            <div class="form-group" style="margin:0;width:80px">
-              <label class="form-label">Cant.</label>
-              <input type="number" class="form-input" id="stock-talle-cantidad" placeholder="0" min="0" step="1">
+            <div id="attr1-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px"></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="text" class="form-input" id="attr1-valor-input" placeholder="Ej: S, M, L" style="font-size:12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addAttrValue(1)}">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="_addAttrValue(1)" style="white-space:nowrap">+ Agregar</button>
             </div>
-            <button type="button" class="btn btn-success" onclick="agregarTalleInline()">+ Agregar</button>
           </div>
-          <div id="stock-talles-lista" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <!-- Atributo 2 (opcional) -->
+          <div id="attr2-section" style="display:none;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <input type="text" class="form-input" id="attr2-nombre" placeholder="Nombre (ej: Color)" style="max-width:140px;font-size:12px" oninput="_syncAttrHeader(2)">
+              <span style="font-size:12px;color:var(--text-3)">Valores:</span>
+              <button type="button" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-3);padding:2px 6px" onclick="_removeAttr2()">Quitar</button>
+            </div>
+            <div id="attr2-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px"></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="text" class="form-input" id="attr2-valor-input" placeholder="Ej: Negro, Blanco" style="font-size:12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();_addAttrValue(2)}">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="_addAttrValue(2)" style="white-space:nowrap">+ Agregar</button>
+            </div>
+          </div>
+          <button type="button" id="btn-agregar-attr2" class="btn btn-secondary btn-sm" onclick="_showAttr2()" style="display:none;margin-bottom:10px;font-size:11px">+ Segundo atributo</button>
+          <!-- Tabla de combinaciones -->
+          <div id="comb-table-wrap" style="display:none;margin-top:10px;overflow-x:auto">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)" id="comb-table-header">Combinaciones</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--text-3)">Aplicar a todas:</span>
+                <input type="number" id="comb-bulk-val" min="0" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)" placeholder="0">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="_applyBulk()" style="font-size:11px;padding:3px 8px">Aplicar</button>
+              </div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px" id="comb-table">
+              <thead><tr id="comb-thead"></tr></thead>
+              <tbody id="comb-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
       <div class="form-actions">
@@ -1173,6 +1205,8 @@ function clearRefreshToken()      { localStorage.removeItem('gestion_refresh_tok
 async function tryRefreshToken() {
   const rt = getRefreshToken();
   if (!rt) return false;
+  // Preservar el mismo storage que eligió el usuario al hacer login
+  const persist = !!localStorage.getItem('gestion_token') || !!localStorage.getItem('gestion_refresh_token');
   try {
     const res = await fetch('/api/auth/refresh', {
       method: 'POST',
@@ -1181,8 +1215,8 @@ async function tryRefreshToken() {
     });
     if (!res.ok) return false;
     const data = await res.json();
-    setToken(data.token);
-    if (data.refreshToken) setRefreshToken(data.refreshToken);
+    setToken(data.token, persist ? undefined : false);
+    if (data.refreshToken) setRefreshToken(data.refreshToken, persist ? undefined : false);
     return true;
   } catch { return false; }
 }
@@ -2736,8 +2770,9 @@ async function renderConfig(){
   const tiendaConfigurada = !!(cfg.tiendaNombre);
   const cuentaConfigurada = !!(_currentUser?.nombre||'').trim();
 
+  const _accDefaultOpen = (id) => id === 'cuenta' ? nombreVacio : id === 'tienda-activar';
   const _accHdr = (id, title, subtitle, isConfigured) => {
-    const isOpen = _cfgOpen(id, id==='cuenta' && nombreVacio);
+    const isOpen = _cfgOpen(id, _accDefaultOpen(id));
     const right = isConfigured
       ? `<span class="cfg-badge-ok">Configurado ✓</span>`
       : `<svg class="cfg-chevron ${isOpen?'open':''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
@@ -2750,7 +2785,7 @@ async function renderConfig(){
     </div>`;
   };
   const _accBody = (id, content) => {
-    const isOpen = _cfgOpen(id, id==='cuenta' && nombreVacio);
+    const isOpen = _cfgOpen(id, _accDefaultOpen(id));
     return `<div class="cfg-acc-body${isOpen?' open':''}" id="cfg-body-${id}"><div class="cfg-acc-body-inner">${content}</div></div>`;
   };
   const _acc = (id, title, subtitle, isConfigured, content) =>
@@ -2898,6 +2933,26 @@ async function renderConfig(){
       <div id="perfil-result" style="font-size:13px"></div>
     </div>`;
 
+  const activarTiendaContent = `
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;line-height:1.6">Al activar la tienda, tendrás acceso al panel Mi Tienda para publicar tus productos, configurar el aspecto de tu tienda y gestionar pedidos online.</p>
+    <div id="activar-tienda-cfg-btn" style="margin-bottom:12px">
+      <button type="button" class="btn btn-primary"
+        onclick="document.getElementById('activar-tienda-cfg-btn').style.display='none';document.getElementById('activar-tienda-cfg-confirm').style.display='block'">
+        Activar tienda online
+      </button>
+    </div>
+    <div id="activar-tienda-cfg-confirm" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:16px;max-width:440px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)">Confirmar activación</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;line-height:1.5">Tu tienda quedará activa y aparecerá el panel Mi Tienda en el menú. No hay costo adicional.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-secondary"
+          onclick="document.getElementById('activar-tienda-cfg-btn').style.display='';document.getElementById('activar-tienda-cfg-confirm').style.display='none'">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-config-confirmar-tienda" onclick="_activarTiendaDesdeConfig()">Confirmar activación</button>
+      </div>
+    </div>`;
+
   setMain(`
   <div style="max-width:680px;margin:0 auto;padding:0 16px;box-sizing:border-box">
   <div class="page-header"><div>
@@ -2905,7 +2960,9 @@ async function renderConfig(){
     <div class="page-subtitle">Notificaciones y datos de cuenta</div>
   </div></div>
 
-  ${esTienda ? _acc('tienda','Mi Tienda Online',tiendaConfigurada?cfg.tiendaNombre:'No configurada',tiendaConfigurada,tiendaContent) : ''}
+  ${esTienda
+    ? _acc('tienda','Mi Tienda Online',tiendaConfigurada?cfg.tiendaNombre:'No configurada',tiendaConfigurada,tiendaContent)
+    : _acc('tienda-activar','Tienda online','Inactiva',false,activarTiendaContent)}
   ${_acc('alertas','Alertas de deudas vencidas','Email · Telegram',alertasActivas,alertasContent)}
   ${_acc('cuenta','Datos de la cuenta',_currentUser?.nombre||'',cuentaConfigurada,cuentaContent)}
 
@@ -4371,29 +4428,21 @@ let variantesModalProductoId = null;
 let variantesCache = [];
 
 // Stock inline (modal Nuevo Producto)
-let stockInlineModo = null; // null | 'unico' | 'talles'
-let stockInlineVariantes = []; // [{ nombre, cantidad }]
+let stockInlineModo = null; // null | 'unico' | 'atributos'
+let stockInlineVariantes = [];
 
 function setModoVariante(modo) {
   stockInlineModo = modo;
   document.getElementById('stock-modo-unico').style.display = modo === 'unico' ? '' : 'none';
-  document.getElementById('stock-modo-talles').style.display = modo === 'talles' ? '' : 'none';
-  ['unico', 'talles'].forEach(m => {
+  const attrEl = document.getElementById('stock-modo-atributos');
+  if (attrEl) attrEl.style.display = modo === 'atributos' ? '' : 'none';
+  ['unico', 'atributos'].forEach(m => {
     const b = document.getElementById(`btn-modo-${m}`);
     if (!b) return;
     b.classList.toggle('btn-primary', m === modo);
     b.classList.toggle('btn-secondary', m !== modo);
   });
-}
-
-function agregarTalleInline() {
-  const nombre = document.getElementById('stock-talle-nombre').value.trim();
-  const cantidad = parseInt(document.getElementById('stock-talle-cantidad').value) || 0;
-  if (!nombre) { alert('Ingresá el nombre del talle'); return; }
-  stockInlineVariantes.push({ nombre, cantidad });
-  document.getElementById('stock-talle-nombre').value = '';
-  document.getElementById('stock-talle-cantidad').value = '';
-  renderTallesInline();
+  if (modo === 'atributos') _rebuildCombTable();
 }
 
 function eliminarTalleInline(idx) {
@@ -4537,47 +4586,22 @@ function onImageFilesSelected(event) {
 }
 
 function stockResumen(prod) {
-  const vars = prod.variantes || [];
-  if (!vars.length) return '<span class="badge badge-blue">Sin variantes</span>';
+  const vars = (prod.variantes || []).filter(v => v.tipo !== 'color');
+  if (!vars.length) return '<span class="badge badge-blue">Sin stock</span>';
   const total = vars.reduce((s,v) => s + (parseInt(v.cantidad)||0), 0);
   const sinStock = vars.filter(v => (parseInt(v.cantidad)||0) === 0).length;
-  const bajoStock = vars.filter(v => (parseInt(v.cantidad)||0) > 0 && (parseInt(v.cantidad)||0) <= 2).length;
-  let html = `<span style="font-weight:700">${total}</span> uds`;
-  if (sinStock) html += ` <span class="badge badge-red">${sinStock} sin stock</span>`;
-  if (bajoStock) html += ` <span class="badge badge-orange">${bajoStock} bajo</span>`;
-  return html;
+  if (sinStock === vars.length) return '<span class="badge badge-red">Sin stock</span>';
+  if (sinStock > 0) return `<span style="font-weight:700">${total}</span> uds <span class="badge badge-orange">${sinStock} sin stock</span>`;
+  return `<span class="badge badge-green">En stock</span> <span style="font-weight:700;font-size:12px">${total} uds</span>`;
 }
 
 function renderStock() {
   const activos = productos.filter(p => p.activo !== 0);
   const totalValor = activos.reduce((s, p) => {
-    const stockTotal = (p.variantes||[]).reduce((sv, v) => sv + (parseInt(v.cantidad)||0), 0);
+    const stockTotal = (p.variantes||[]).filter(v=>v.tipo!=='color').reduce((sv, v) => sv + (parseInt(v.cantidad)||0), 0);
     return s + stockTotal * (parseFloat(p.precio)||0);
   }, 0);
-  const alertas = activos.reduce((s, p) => s + (p.variantes||[]).filter(v => (parseInt(v.cantidad)||0) === 0).length, 0);
-
-  let filas = '';
-  if (!activos.length) {
-    filas = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div class="empty-state-text">No hay productos. Creá el primero.</div></div></td></tr>`;
-  } else {
-    filas = activos.map(p => {
-      const img = p.imagenUrl
-        ? `<img src="${p.imagenUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e9ecef">`
-        : `<div style="width:40px;height:40px;border-radius:6px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
-      return `<tr>
-        <td data-label="Imagen">${img}</td>
-        <td data-label="Nombre"><strong>${p.nombre}</strong>${p.nuevo?'<span class="badge badge-blue" style="margin-left:6px">Nuevo</span>':''}${p.descripcion?`<br><small style="color:var(--text-2)">${p.descripcion.slice(0,60)}${p.descripcion.length>60?'...':''}</small>`:''}</td>
-        <td data-label="Categoría">${p.categoria?`<span class="badge badge-purple">${p.categoria}</span>`:'—'}</td>
-        <td data-label="Precio">${fmt(p.precio)}</td>
-        <td data-label="Stock">${stockResumen(p)}</td>
-        <td data-label="">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalProducto('${p.id}')">Editar</button>
-          <button class="btn btn-primary btn-sm" onclick="abrirModalVariantes('${p.id}')">Variantes</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDeleteProducto('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
-        </td>
-      </tr>`;
-    }).join('');
-  }
+  const alertas = activos.reduce((s, p) => s + (p.variantes||[]).filter(v => v.tipo!=='color' && (parseInt(v.cantidad)||0) === 0).length, 0);
 
   setMain(`
   <div class="page-header">
@@ -4588,20 +4612,141 @@ function renderStock() {
   </div>
   <div class="stats-grid" style="margin-bottom:20px">
     <div class="stat-card"><div class="stat-label">Productos activos</div><div class="stat-value blue">${activos.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Alertas sin stock</div><div class="stat-value ${alertas>0?'red':'green'}">${alertas}</div></div>
+    <div class="stat-card"><div class="stat-label">Sin stock</div><div class="stat-value ${alertas>0?'red':'green'}">${alertas}</div></div>
     <div class="stat-card"><div class="stat-label">Valor del stock</div><div class="stat-value green">${fmt(totalValor)}</div></div>
   </div>
   <div id="categorias-section" style="margin-bottom:16px"></div>
-  <div class="card">
+  ${renderStockExpandableTable(activos)}
+  `);
+  renderCategoriasSection();
+}
+
+function renderStockExpandableTable(activos) {
+  if (!activos.length) return `<div class="empty-state"><div class="empty-state-text">No hay productos. Creá el primero.</div></div>`;
+  const filas = activos.map(p => {
+    const img = (p.imagenes && p.imagenes[0]) || p.imagenUrl
+      ? `<img src="${(p.imagenes && p.imagenes[0]) || p.imagenUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">`
+      : `<div style="width:36px;height:36px;border-radius:5px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+    const vars = (p.variantes||[]).filter(v => v.tipo !== 'color');
+    const hasVars = vars.length > 0;
+    return `<tr id="stock-row-${p.id}" class="stock-row" onclick="_toggleStockRow('${p.id}')" style="cursor:pointer">
+      <td style="width:44px">${img}</td>
+      <td><strong>${p.nombre}</strong>${p.nuevo?'<span class="badge badge-blue" style="margin-left:6px">Nuevo</span>':''}</td>
+      <td style="color:var(--text-2)">${p.categoria?`<span class="badge badge-purple">${p.categoria}</span>`:'—'}</td>
+      <td>${fmt(p.precio)}</td>
+      <td id="stock-badge-${p.id}">${stockResumen(p)}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalProducto('${p.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteProducto('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
+        ${hasVars ? `<button class="btn btn-secondary btn-sm" id="expand-btn-${p.id}" onclick="_toggleStockRow('${p.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>` : ''}
+      </td>
+    </tr>
+    <tr id="stock-expand-${p.id}" style="display:none">
+      <td colspan="6" style="padding:0">
+        <div id="stock-expand-inner-${p.id}" style="padding:8px 16px 12px;background:var(--surface-2);border-top:1px solid var(--border)">
+          ${renderVariantasInline(p)}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  return `<div class="card" style="padding:0;overflow:hidden">
     <div class="table-container">
-      <table class="table-responsive">
-        <thead><tr><th>Imagen</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+      <table class="table-responsive" style="font-size:13px">
+        <thead><tr><th style="width:44px"></th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
         <tbody>${filas}</tbody>
       </table>
     </div>
-  </div>
-  `);
-  renderCategoriasSection();
+  </div>`;
+}
+
+let _expandedStockRow = null;
+let _stockDebounceTimers = {};
+
+function _toggleStockRow(prodId) {
+  const row = document.getElementById(`stock-expand-${prodId}`);
+  const btn = document.getElementById(`expand-btn-${prodId}`);
+  if (!row) return;
+  const isOpen = row.style.display !== 'none';
+  if (_expandedStockRow && _expandedStockRow !== prodId) {
+    const prev = document.getElementById(`stock-expand-${_expandedStockRow}`);
+    const prevBtn = document.getElementById(`expand-btn-${_expandedStockRow}`);
+    if (prev) prev.style.display = 'none';
+    if (prevBtn) prevBtn.style.transform = '';
+  }
+  row.style.display = isOpen ? 'none' : '';
+  if (btn) btn.style.transform = isOpen ? '' : 'rotate(180deg)';
+  _expandedStockRow = isOpen ? null : prodId;
+}
+
+function renderVariantasInline(prod) {
+  const vars = (prod.variantes||[]).filter(v => v.tipo !== 'color');
+  if (!vars.length) return `<span style="font-size:12px;color:var(--text-3)">Sin variantes registradas.</span>`;
+  const colorMap = {};
+  (prod.variantes||[]).filter(v => v.tipo === 'color').forEach(cv => { colorMap[cv.id] = cv.nombre; });
+  return `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr>
+      <th style="text-align:left;padding:4px 8px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:10px">Variante</th>
+      <th style="text-align:center;padding:4px 8px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:10px">Stock</th>
+      <th style="text-align:center;padding:4px 8px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:10px">Editar</th>
+    </tr></thead>
+    <tbody>
+    ${vars.map(v => {
+      const colorNombre = v.colorId ? (colorMap[v.colorId] ? colorMap[v.colorId] + ' / ' : '') : '';
+      const cant = parseInt(v.cantidad)||0;
+      const dimmed = cant === 0 ? 'color:var(--text-3)' : '';
+      return `<tr style="${dimmed}">
+        <td style="padding:4px 8px;border-bottom:1px solid var(--border)">${colorNombre}${v.nombre}</td>
+        <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center">
+          <span id="stock-qty-label-${v.id}" class="badge ${cant===0?'badge-red':cant<=2?'badge-orange':'badge-green'}">${cant}</span>
+        </td>
+        <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center">
+          <div style="display:inline-flex;align-items:center;gap:4px">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:14px;line-height:1" onclick="_stockDelta('${v.id}','${prod.id}',-1)">−</button>
+            <input type="number" min="0" value="${cant}" id="stock-qty-input-${v.id}"
+              style="width:54px;padding:3px 4px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)"
+              oninput="_stockInputChange('${v.id}','${prod.id}',this.value)">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:14px;line-height:1" onclick="_stockDelta('${v.id}','${prod.id}',1)">+</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function _stockDelta(varId, prodId, delta) {
+  const inp = document.getElementById(`stock-qty-input-${varId}`);
+  if (!inp) return;
+  const newVal = Math.max(0, (parseInt(inp.value)||0) + delta);
+  inp.value = newVal;
+  _stockInputChange(varId, prodId, newVal);
+}
+
+function _stockInputChange(varId, prodId, value) {
+  const newCant = Math.max(0, parseInt(value)||0);
+  clearTimeout(_stockDebounceTimers[varId]);
+  _stockDebounceTimers[varId] = setTimeout(async () => {
+    try {
+      await api('PATCH', `/api/variantes/${varId}/stock`, { cantidad: newCant });
+      // Actualizar en memoria
+      const p = productos.find(x => x.id === prodId);
+      if (p) {
+        const v = (p.variantes||[]).find(x => x.id === varId);
+        if (v) v.cantidad = newCant;
+      }
+      // Actualizar badge de la fila
+      const labelEl = document.getElementById(`stock-qty-label-${varId}`);
+      if (labelEl) {
+        labelEl.textContent = newCant;
+        labelEl.className = `badge ${newCant===0?'badge-red':newCant<=2?'badge-orange':'badge-green'}`;
+      }
+      const p2 = productos.find(x => x.id === prodId);
+      const badgeEl = document.getElementById(`stock-badge-${prodId}`);
+      if (badgeEl && p2) badgeEl.innerHTML = stockResumen(p2);
+    } catch(e) { showToast('Error al actualizar stock: ' + e.message, 5000); }
+  }, 800);
 }
 
 
@@ -4638,6 +4783,159 @@ async function sincronizarMP() {
   }
 }
 
+
+// ── ATRIBUTOS + COMBINACIONES (modal nuevo producto) ─────────────────────────
+let _attr = [
+  { nombre: '', valores: [] },
+  { nombre: '', valores: [] },
+];
+let _combData = []; // [{ key, nombre, cantidad }]
+let _attr2Visible = false;
+
+function _resetAtributos() {
+  _attr = [{ nombre: '', valores: [] }, { nombre: '', valores: [] }];
+  _combData = [];
+  _attr2Visible = false;
+  const a1n = document.getElementById('attr1-nombre');
+  const a2n = document.getElementById('attr2-nombre');
+  const a1v = document.getElementById('attr1-valor-input');
+  const a2v = document.getElementById('attr2-valor-input');
+  if (a1n) a1n.value = '';
+  if (a2n) a2n.value = '';
+  if (a1v) a1v.value = '';
+  if (a2v) a2v.value = '';
+  const a2s = document.getElementById('attr2-section');
+  const btn2 = document.getElementById('btn-agregar-attr2');
+  if (a2s) a2s.style.display = 'none';
+  if (btn2) btn2.style.display = 'none';
+  _renderAttrChips(1); _renderAttrChips(2); _rebuildCombTable();
+}
+
+function _syncAttrHeader(n) {
+  _attr[n - 1].nombre = (document.getElementById(`attr${n}-nombre`)?.value || '').trim();
+  _rebuildCombTableHeader();
+}
+
+function _addAttrValue(n) {
+  const inp = document.getElementById(`attr${n}-valor-input`);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  // Split por coma para agregar múltiples de una vez
+  val.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
+    if (!_attr[n - 1].valores.includes(v)) _attr[n - 1].valores.push(v);
+  });
+  inp.value = '';
+  _renderAttrChips(n);
+  _rebuildCombTable();
+  if (n === 1 && _attr[0].valores.length > 0 && !_attr2Visible) {
+    const btn2 = document.getElementById('btn-agregar-attr2');
+    if (btn2) btn2.style.display = '';
+  }
+}
+
+function _removeAttrValue(n, val) {
+  _attr[n - 1].valores = _attr[n - 1].valores.filter(v => v !== val);
+  // Preservar cantidades existentes en _combData
+  _renderAttrChips(n);
+  _rebuildCombTable();
+}
+
+function _renderAttrChips(n) {
+  const wrap = document.getElementById(`attr${n}-chips`);
+  if (!wrap) return;
+  wrap.innerHTML = _attr[n - 1].valores.map(v =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:#fff;padding:3px 9px;border-radius:16px;font-size:12px;font-weight:600">
+      ${v}
+      <button type="button" onclick="_removeAttrValue(${n},'${v.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.75;font-size:13px;line-height:1;padding:0">×</button>
+    </span>`
+  ).join('');
+}
+
+function _showAttr2() {
+  _attr2Visible = true;
+  const a2s = document.getElementById('attr2-section');
+  const btn2 = document.getElementById('btn-agregar-attr2');
+  if (a2s) a2s.style.display = '';
+  if (btn2) btn2.style.display = 'none';
+}
+
+function _removeAttr2() {
+  _attr2Visible = false;
+  _attr[1] = { nombre: '', valores: [] };
+  const a2s = document.getElementById('attr2-section');
+  const a2n = document.getElementById('attr2-nombre');
+  const a2v = document.getElementById('attr2-valor-input');
+  if (a2s) a2s.style.display = 'none';
+  if (a2n) a2n.value = '';
+  if (a2v) a2v.value = '';
+  const btn2 = document.getElementById('btn-agregar-attr2');
+  if (btn2) btn2.style.display = _attr[0].valores.length > 0 ? '' : 'none';
+  _renderAttrChips(2);
+  _rebuildCombTable();
+}
+
+function _rebuildCombTable() {
+  const wrap = document.getElementById('comb-table-wrap');
+  if (!wrap) return;
+  const v1 = _attr[0].valores;
+  const v2 = _attr[1].valores;
+  if (!v1.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  // Generar combinaciones preservando cantidades existentes
+  const prevMap = Object.fromEntries(_combData.map(c => [c.key, c.cantidad]));
+  if (v2.length) {
+    _combData = v1.flatMap(a => v2.map(b => {
+      const key = `${a}|${b}`;
+      return { key, a1: a, a2: b, nombre: `${a} / ${b}`, cantidad: prevMap[key] ?? 0 };
+    }));
+  } else {
+    _combData = v1.map(a => {
+      const key = a;
+      return { key, a1: a, a2: null, nombre: a, cantidad: prevMap[key] ?? 0 };
+    });
+  }
+  _rebuildCombTableHeader();
+  _renderCombRows();
+}
+
+function _rebuildCombTableHeader() {
+  const thead = document.getElementById('comb-thead');
+  if (!thead) return;
+  const n1 = _attr[0].nombre || 'Atributo 1';
+  const n2 = _attr[1].nombre || 'Atributo 2';
+  const hasA2 = _combData.length > 0 && _combData[0].a2 !== null;
+  const headerEl = document.getElementById('comb-table-header');
+  if (headerEl) headerEl.textContent = `${n1}${hasA2 ? ' / ' + n2 : ''} — Stock`;
+  thead.innerHTML = `<tr>
+    <th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">${n1}</th>
+    ${hasA2 ? `<th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">${n2}</th>` : ''}
+    <th style="text-align:center;padding:5px 8px;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">Stock</th>
+  </tr>`;
+}
+
+function _renderCombRows() {
+  const tbody = document.getElementById('comb-tbody');
+  if (!tbody) return;
+  const hasA2 = _combData.length > 0 && _combData[0].a2 !== null;
+  tbody.innerHTML = _combData.map((c, i) => `
+    <tr style="${c.cantidad === 0 ? 'color:var(--text-3)' : ''}">
+      <td style="padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px">${c.a1}</td>
+      ${hasA2 ? `<td style="padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px">${c.a2}</td>` : ''}
+      <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center">
+        <input type="number" min="0" value="${c.cantidad}" style="width:64px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;background:var(--surface);color:var(--text)"
+          oninput="_combData[${i}].cantidad=parseInt(this.value)||0;this.parentElement.parentElement.style.color=_combData[${i}].cantidad===0?'var(--text-3)':''">
+      </td>
+    </tr>`).join('');
+}
+
+function _applyBulk() {
+  const val = parseInt(document.getElementById('comb-bulk-val')?.value) || 0;
+  _combData.forEach(c => c.cantidad = val);
+  _renderCombRows();
+  document.getElementById('comb-bulk-val').value = '';
+}
 
 // ── CATEGORÍAS DE PRODUCTOS ───────────────────────────────────────────────────
 let _categoriaCache = null;
@@ -4797,16 +5095,15 @@ async function abrirModalProducto(id = null) {
   // Reset stock inline state
   stockInlineModo = null;
   stockInlineVariantes = [];
-  ['btn-modo-unico', 'btn-modo-talles'].forEach(btnId => {
+  ['btn-modo-unico', 'btn-modo-atributos'].forEach(btnId => {
     const b = document.getElementById(btnId);
     if (b) { b.classList.remove('btn-primary'); b.classList.add('btn-secondary'); }
   });
   const uniEl = document.getElementById('stock-modo-unico');
-  const talEl = document.getElementById('stock-modo-talles');
-  const listaEl = document.getElementById('stock-talles-lista');
+  const attrEl = document.getElementById('stock-modo-atributos');
   if (uniEl) uniEl.style.display = 'none';
-  if (talEl) talEl.style.display = 'none';
-  if (listaEl) listaEl.innerHTML = '';
+  if (attrEl) attrEl.style.display = 'none';
+  _resetAtributos();
   const seccion = document.getElementById('seccion-stock-inline');
   if (seccion) seccion.style.display = id ? 'none' : '';
 
@@ -4860,19 +5157,27 @@ async function submitProducto(e) {
     if (!id) {
       const resp = await api('POST', '/api/productos', baseBody);
       productId = resp.id;
-      // Post inline variants
-      if (stockInlineModo) {
-        const variantesACrear = [];
-        if (stockInlineModo === 'unico') {
-          const cant = parseInt(document.getElementById('stock-unico-cantidad').value) || 0;
-          if (cant > 0) variantesACrear.push({ tipo: 'unico', nombre: 'Único', cantidad: cant, imagen: '', colorId: '' });
-        } else if (stockInlineModo === 'talles') {
-          for (const v of stockInlineVariantes) {
-            variantesACrear.push({ tipo: 'talle', nombre: v.nombre, cantidad: v.cantidad, imagen: '', colorId: '' });
+      // Crear variantes según modo
+      if (stockInlineModo === 'unico') {
+        const cant = parseInt(document.getElementById('stock-unico-cantidad').value) || 0;
+        if (cant > 0) await api('POST', `/api/productos/${productId}/variantes`, { tipo: 'unico', nombre: 'Único', cantidad: cant, imagen: '', colorId: '' });
+      } else if (stockInlineModo === 'atributos' && _combData.length > 0) {
+        const tieneA2 = _combData[0].a2 !== null;
+        if (tieneA2) {
+          // Crear variantes de color primero, luego talles vinculados
+          const coloresUnicos = [...new Set(_combData.map(c => c.a2))];
+          const colorMap = {};
+          for (const color of coloresUnicos) {
+            const cv = await api('POST', `/api/productos/${productId}/variantes`, { tipo: 'color', nombre: color, cantidad: 0, imagen: '', colorId: '' });
+            colorMap[color] = cv.id;
           }
-        }
-        if (variantesACrear.length > 0) {
-          await Promise.all(variantesACrear.map(v => api('POST', `/api/productos/${productId}/variantes`, v)));
+          await Promise.all(_combData.map(c =>
+            api('POST', `/api/productos/${productId}/variantes`, { tipo: 'talle', nombre: c.a1, cantidad: c.cantidad, imagen: '', colorId: colorMap[c.a2] })
+          ));
+        } else {
+          await Promise.all(_combData.map(c =>
+            api('POST', `/api/productos/${productId}/variantes`, { tipo: 'talle', nombre: c.a1, cantidad: c.cantidad, imagen: '', colorId: '' })
+          ));
         }
       }
     }
@@ -5189,7 +5494,26 @@ async function handleActivarTiendaFlow() {
       await renderMiTienda();
     }
   } catch(err) {
-    showToast('Error al activar la tienda: ' + err.message, 'error');
+    showToast('Error al activar la tienda: ' + err.message, 6000);
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar activación'; }
+  }
+}
+
+async function _activarTiendaDesdeConfig() {
+  const btn = document.getElementById('btn-config-confirmar-tienda');
+  if (btn) { btn.disabled = true; btn.textContent = 'Activando...'; }
+  try {
+    const r = await api('POST', '/api/auth/activar-tienda');
+    if (r.ok) {
+      _currentUser.tipoCuenta = 'gestion_tienda';
+      _currentUser.tiendaPublicId = r.tiendaPublicId;
+      renderSidebar();
+      await loadAll();
+      showToast('Tienda activada. Ya podés configurarla desde Mi Tienda.');
+      showPage('mi-tienda');
+    }
+  } catch(err) {
+    showToast('Error al activar la tienda: ' + err.message, 6000);
     if (btn) { btn.disabled = false; btn.textContent = 'Confirmar activación'; }
   }
 }
@@ -5935,40 +6259,15 @@ async function eliminarPromo(id) {
 
 // ─── STOCK SIN TIENDA ─────────────────────────────────────────────────────────
 function renderStockSinTienda() {
+  const activos = productos.filter(p => p.activo !== 0);
   setMain(`
   <div class="page-header">
     <div><div class="page-title">Stock</div><div class="page-subtitle">Inventario de productos</div></div>
     <button class="btn btn-success" onclick="abrirModalProducto()">+ Nuevo Producto</button>
   </div>
   <div id="categorias-section" style="margin-bottom:16px"></div>
-  ${renderStockTable()}`);
+  ${renderStockExpandableTable(activos)}`);
   renderCategoriasSection();
-}
-
-function renderStockTable() {
-  const activos = productos.filter(p => p.activo !== 0);
-  if (!activos.length) return `<div class="empty-state"><div class="empty-state-text">No hay productos. Creá el primero.</div></div>`;
-  const filas = activos.map(p => {
-    const img = p.imagenUrl
-      ? `<img src="${p.imagenUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">`
-      : `<div style="width:36px;height:36px;border-radius:5px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-3)">◻</div>`;
-    return `<tr>
-      <td>${img}</td>
-      <td><strong>${p.nombre}</strong>${p.nuevo?'<span class="badge badge-blue" style="margin-left:6px">Nuevo</span>':''}</td>
-      <td>${p.categoria?`<span class="badge badge-purple">${p.categoria}</span>`:'—'}</td>
-      <td>${fmt(p.precio)}</td>
-      <td>${stockResumen(p)}</td>
-      <td>
-        <button class="btn btn-secondary btn-sm" onclick="abrirModalProducto('${p.id}')">Editar</button>
-        <button class="btn btn-secondary btn-sm" onclick="abrirModalVariantes('${p.id}')">Variantes</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmDeleteProducto('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
-      </td>
-    </tr>`;
-  }).join('');
-  return `<div class="card"><div class="table-container"><table class="table-responsive">
-    <thead><tr><th></th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
-    <tbody>${filas}</tbody>
-  </table></div></div>`;
 }
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────

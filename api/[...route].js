@@ -469,7 +469,8 @@ module.exports = async function handler(req, res) {
     return handleGetVariantes(req, res, user, segments[1]);
   if (method === 'POST' && segments[0] === 'productos' && segments[2] === 'variantes')
     return handlePostVariante(req, res, user, segments[1]);
-  if (method === 'PUT'  && segments[0] === 'variantes') return handlePutVariante(req, res, user, segments[1]);
+  if (method === 'PUT'    && segments[0] === 'variantes') return handlePutVariante(req, res, user, segments[1]);
+  if (method === 'PATCH'  && segments[0] === 'variantes' && segments[2] === 'stock') return handlePatchVarianteStock(req, res, user, segments[1]);
   if (method === 'DELETE' && segments[0] === 'variantes') return handleDeleteVariante(req, res, user, segments[1]);
 
   // Notificaciones
@@ -1012,6 +1013,25 @@ async function handleDeleteVariante(req, res, user, id) {
   const { error } = await adminSupabase.from('producto_variantes').delete().eq('id', id);
   if (error) return json(res, 500, { error: error.message });
   return json(res, 200, { ok: true });
+}
+
+async function handlePatchVarianteStock(req, res, user, id) {
+  const body = await parseBody(req);
+  const cantidad = parseInt(body.cantidad);
+  if (isNaN(cantidad) || cantidad < 0) return json(res, 400, { error: 'Cantidad inválida' });
+
+  // Verificar que la variante pertenece al usuario vía JOIN con productos
+  const { data: variante } = await adminSupabase
+    .from('producto_variantes').select('id, producto_id').eq('id', id).single();
+  if (!variante) return json(res, 404, { error: 'Variante no encontrada' });
+  const { data: prod } = await adminSupabase
+    .from('productos').select('id').eq('id', variante.producto_id).eq('user_id', user.userId).single();
+  if (!prod) return json(res, 403, { error: 'Sin permiso' });
+
+  const { error } = await adminSupabase
+    .from('producto_variantes').update({ cantidad }).eq('id', id);
+  if (error) return json(res, 500, { error: error.message });
+  return json(res, 200, { ok: true, cantidad, disponible: cantidad > 0 });
 }
 
 // ── NOTIFICACIONES ───────────────────────────────────────────────────────────

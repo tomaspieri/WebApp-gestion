@@ -371,3 +371,7 @@ ON CONFLICT (user_id, nombre) DO NOTHING;
 
 -- banner_titulo_partes en tienda_config
 ALTER TABLE tienda_config ADD COLUMN IF NOT EXISTS banner_titulo_partes JSONB DEFAULT NULL;
+
+-- ── MIGRACIÓN V8: precio_variante ────────────────────────────────────────────
+ALTER TABLE producto_variantes
+  ADD COLUMN IF NOT EXISTS precio_variante NUMERIC(12,2) DEFAULT NULL;
