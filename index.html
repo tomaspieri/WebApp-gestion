@@ -5613,12 +5613,44 @@ async function renderMiTienda() {
         const base = steps[0].val || 1;
         return steps.map(({label,val}, i) => {
           const barPct = Math.min(Math.round(val/base*100),100);
-          const pctLbl = steps[0].val > 0 ? barPct + '%' : '—';
-          const conector = i < steps.length-1 ? `
-            <div style="text-align:center;font-size:11px;color:var(--text-3);padding:5px 0;display:flex;align-items:center;gap:6px;justify-content:center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-              ${steps[i+1].val} de ${val} siguieron
-            </div>` : '';
+
+          // Porcentaje relativo al paso anterior
+          let pctLbl = '—', pctSub = '';
+          if (i === 0) {
+            pctLbl = steps[0].val > 0 ? '100%' : '—';
+          } else {
+            const prev = steps[i-1].val;
+            if (prev > 0) {
+              const pct = Math.round(val/prev*100);
+              if (val > prev) {
+                pctLbl = `<span style="color:var(--danger,#c05050)">${pct}%</span>`;
+                pctSub = 'dato inesperado';
+              } else {
+                pctLbl = pct + '%';
+                pctSub = 'del paso ant.';
+              }
+            } else if (val > 0) {
+              pctLbl = `<span style="color:var(--danger,#c05050)">!</span>`;
+              pctSub = 'dato inesperado';
+            }
+          }
+
+          // Conector entre pasos: ocultar "X de 0 siguieron"
+          let conector = '';
+          if (i < steps.length - 1) {
+            if (val > 0) {
+              const connPct = Math.round(steps[i+1].val / val * 100);
+              conector = `<div style="text-align:center;font-size:11px;color:var(--text-3);padding:5px 0;display:flex;align-items:center;gap:6px;justify-content:center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                ${steps[i+1].val} de ${val} continuaron (${connPct}%)
+              </div>`;
+            } else {
+              conector = `<div style="padding:5px 0;display:flex;justify-content:center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3)"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>`;
+            }
+          }
+
           return `<div style="margin-bottom:2px">
             <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:4px">${label}</div>
             <div style="font-size:28px;font-weight:600;color:var(--text);line-height:1;margin-bottom:8px">${val}</div>
@@ -5626,7 +5658,10 @@ async function renderMiTienda() {
               <div style="flex:1;background:var(--surface-2);border-radius:4px;height:10px;overflow:hidden">
                 <div style="background:var(--accent);height:100%;border-radius:4px;width:${barPct}%;transition:width .4s ease"></div>
               </div>
-              <span style="font-size:12px;color:var(--text-3);width:38px;text-align:right">${pctLbl}</span>
+              <div style="width:44px;text-align:right;flex-shrink:0">
+                <div style="font-size:12px;color:var(--text-3)">${pctLbl}</div>
+                ${pctSub ? `<div style="font-size:10px;color:var(--text-3);line-height:1.2;margin-top:1px">${pctSub}</div>` : ''}
+              </div>
             </div>
           </div>${conector}`;
         }).join('');
