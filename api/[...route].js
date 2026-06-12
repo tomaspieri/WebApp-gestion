@@ -2891,6 +2891,7 @@ async function handleTiendaGetConfig(req, res, rawPublicId) {
     instagram_url:          cfg.instagram_url || '',
     whatsapp_numero:        cfg.whatsapp_numero || '',
     envio_gratis_desde:     cfg.envio_gratis_desde ? parseFloat(cfg.envio_gratis_desde) : null,
+    fuentes_custom:         cfg.fuentes_custom || [],
   });
 }
 
@@ -3433,7 +3434,7 @@ const ALLOWED_CONFIG_FIELDS = [
   'banner_imagen_url','banner_titulo','banner_titulo_partes','banner_subtitulo',
   'banner_boton_texto','banner_boton_url','secciones',
   'franja_texto','franja_activa','instagram_url',
-  'whatsapp_numero','envio_gratis_desde',
+  'whatsapp_numero','envio_gratis_desde','fuentes_custom',
 ];
 
 function sanitizeText(v, maxLen = 500) {
@@ -3467,10 +3468,18 @@ async function handlePutMiTiendaConfig(req, res, user) {
       if (v === null) { updates[field] = null; continue; }
       if (!Array.isArray(v)) continue;
       updates[field] = v.slice(0, 4).map(p => ({
-        texto:   String(p.texto || '').replace(/<[^>]*>/g, '').trim().slice(0, 100),
-        color:   (p.color && /^#[0-9A-Fa-f]{6}$/.test(p.color)) ? p.color : null,
-        italica: !!p.italica,
+        texto:             String(p.texto || '').replace(/<[^>]*>/g, '').trim().slice(0, 100),
+        color:             (p.color && /^#[0-9A-Fa-f]{6}$/.test(p.color)) ? p.color : null,
+        italica:           !!p.italica,
+        fuente:            (p.fuente && /^[a-zA-Z0-9 ]+$/.test(String(p.fuente))) ? String(p.fuente).slice(0, 80) : null,
+        salto_linea_antes: !!p.salto_linea_antes,
       }));
+    } else if (field === 'fuentes_custom') {
+      if (!Array.isArray(v)) continue;
+      updates[field] = v
+        .map(f => String(f).trim().slice(0, 80))
+        .filter(f => /^[a-zA-Z0-9 ]+$/.test(f))
+        .slice(0, 10);
     } else if (['secciones','marquee_items'].includes(field)) {
       if (!Array.isArray(v)) return json(res, 400, { error: `${field} debe ser un array` });
       updates[field] = v.slice(0, 20);

@@ -1740,18 +1740,21 @@ let clientes = [], ventas = [], gastos = [], productos = [];
 
 async function loadAll() {
   if (!_currentUser || _currentUser.rol === 'admin') return;
-  const tipoCuenta = _currentUser.tipoCuenta || 'gestion';
-  const promises = [
-    api('GET', '/api/clientes'),
-    api('GET', '/api/ventas'),
-    api('GET', '/api/gastos'),
-  ];
-  promises.push(api('GET', '/api/productos'));
-  const results = await Promise.all(promises);
-  clientes  = results[0];
-  ventas    = results[1];
-  gastos    = results[2];
-  productos = results[3] || [];
+  try {
+    const _tout = ms => new Promise(r => setTimeout(r, ms));
+    const fetches = Promise.all([
+      api('GET', '/api/clientes'),
+      api('GET', '/api/ventas'),
+      api('GET', '/api/gastos'),
+      api('GET', '/api/productos'),
+    ]);
+    const results = await Promise.race([fetches, _tout(8000).then(() => null)]);
+    if (!results) return;
+    clientes  = results[0];
+    ventas    = results[1];
+    gastos    = results[2];
+    productos = results[3] || [];
+  } catch {}
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -1857,7 +1860,7 @@ async function showPage(page,extra){
   if (page==='perfil')                   { renderPerfil(); return; }
   if (page==='perfil/cambiar-contrasena'){ renderCambiarContrasena(); return; }
 
-  await loadAll();
+  try { await loadAll(); } catch {}
   if      (page==='dashboard')       { _dashShowAllMonths=false; renderDashboard(); }
   else if (page==='clientes')        renderClientes();
   else if (page==='cliente-detalle') { if(extra && extra!==currentClienteId) _ccData=null; if(extra)currentClienteId=extra; await renderClienteDetalle(); }
@@ -5794,16 +5797,108 @@ function renderTabApariencia(cfg) {
   </div>`;
 }
 
+const _FUENTES_BUILTIN = [
+  { label: 'Por defecto', value: '' },
+  { label: 'Cormorant Garamond', value: 'Cormorant Garamond' },
+  { label: 'Playfair Display', value: 'Playfair Display' },
+  { label: 'Georgia', value: 'Georgia' },
+  { label: 'Lato', value: 'Lato' },
+  { label: 'Montserrat', value: 'Montserrat' },
+];
+
+function _buildFuenteSelect(idx, currentFuente) {
+  const custom = window._fuentesCustom || [];
+  const opts = _FUENTES_BUILTIN.map(f =>
+    `<option value="${f.value}" ${currentFuente === f.value ? 'selected' : ''}>${f.label}</option>`
+  ).join('');
+  const customOpts = custom.length
+    ? '<option disabled>──────────</option>' +
+      custom.map(f => `<option value="${f}" ${currentFuente === f ? 'selected' : ''}>${f}</option>`).join('')
+    : '';
+  return `<select class="form-input" style="min-width:130px;font-size:12px;padding:5px 8px"
+    onchange="_onFuenteChange(${idx},this)">
+    ${opts}${customOpts}
+    <option disabled>──────────</option>
+    <option value="__add">+ Agregar fuente...</option>
+  </select>`;
+}
+
+function _onFuenteChange(idx, sel) {
+  if (sel.value === '__add') {
+    sel.value = window._bannerPartes[idx].fuente || '';
+    _abrirModalFuenteCustom(idx);
+    return;
+  }
+  window._bannerPartes[idx].fuente = sel.value || null;
+  _cargarFuenteGF(sel.value);
+  _actualizarPreviewBannerTitulo();
+}
+
+function _cargarFuenteGF(fuente) {
+  if (!fuente || fuente === 'Georgia') return;
+  if (document.querySelector(`link[data-gf="${CSS.escape(fuente)}"]`)) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.setAttribute('data-gf', fuente);
+  link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(fuente) + ':ital,wght@0,400;0,700;1,400;1,700&display=swap';
+  document.head.appendChild(link);
+}
+
+function _abrirModalFuenteCustom(idx) {
+  document.getElementById('modal-fuente-custom')?.remove();
+  const d = document.createElement('div');
+  d.id = 'modal-fuente-custom';
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  d.innerHTML = `<div style="background:var(--bg);border-radius:12px;padding:24px;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-weight:600;margin-bottom:6px;font-size:14px">Agregar fuente de Google Fonts</div>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">Escribí el nombre exacto tal como aparece en fonts.google.com (ej: "Raleway", "DM Serif Display")</div>
+    <input type="text" id="fuente-custom-input" class="form-input" placeholder="Nombre de la fuente..." maxlength="80" style="margin-bottom:12px"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();_confirmarFuenteCustom(${idx})}">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" style="font-size:13px" onclick="document.getElementById('modal-fuente-custom').remove()">Cancelar</button>
+      <button class="btn btn-primary" style="font-size:13px" onclick="_confirmarFuenteCustom(${idx})">Agregar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(d);
+  setTimeout(() => document.getElementById('fuente-custom-input')?.focus(), 50);
+}
+
+async function _confirmarFuenteCustom(idx) {
+  const input = document.getElementById('fuente-custom-input');
+  const nombre = (input?.value || '').trim();
+  if (!nombre || !/^[a-zA-Z0-9 ]+$/.test(nombre)) {
+    if (input) input.style.borderColor = 'var(--danger,#e74c3c)';
+    return;
+  }
+  _cargarFuenteGF(nombre);
+  if (!window._fuentesCustom) window._fuentesCustom = [];
+  if (!window._fuentesCustom.includes(nombre)) {
+    window._fuentesCustom.push(nombre);
+    try { await api('PUT', '/api/tienda-config', { fuentes_custom: window._fuentesCustom }); } catch {}
+  }
+  window._bannerPartes[idx].fuente = nombre;
+  document.getElementById('modal-fuente-custom')?.remove();
+  _renderBannerPartesUI();
+}
+
 function _buildBannerPartesRows() {
   const partes = window._bannerPartes || [];
   return partes.map((p, i) => {
     const safe = (p.texto||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const colorVal = p.color || '#A88671';
     const hasColor = !!p.color;
+    const saltoActivo = !!p.salto_linea_antes;
+    const saltoBg = saltoActivo ? 'background:color-mix(in srgb,var(--accent,#6c5ce7) 12%,transparent);border-color:var(--accent,#6c5ce7);color:var(--accent,#6c5ce7)' : 'background:transparent;border-color:var(--border);color:var(--text-3)';
+    const saltoBtn = i > 0 ? `<button type="button"
+      style="padding:5px 8px;border:1px solid;border-radius:6px;cursor:pointer;font-size:13px;line-height:1;flex-shrink:0;${saltoBg}"
+      onclick="window._bannerPartes[${i}].salto_linea_antes=!window._bannerPartes[${i}].salto_linea_antes;_renderBannerPartesUI()"
+      title="Salto de línea antes de esta parte">↵</button>` : '<div style="width:31px;flex-shrink:0"></div>';
     return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-      <input type="text" class="form-input" style="flex:1;min-width:140px" value="${safe}" maxlength="100"
+      ${saltoBtn}
+      <input type="text" class="form-input" style="flex:1;min-width:120px" value="${safe}" maxlength="100"
         oninput="window._bannerPartes[${i}].texto=this.value;_actualizarPreviewBannerTitulo()">
-      <label style="display:flex;align-items:center;gap:4px;cursor:pointer" title="Usar color personalizado">
+      ${_buildFuenteSelect(i, p.fuente || '')}
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer" title="Color personalizado">
         <input type="checkbox" style="accent-color:var(--accent)" ${hasColor?'checked':''}
           onchange="window._bannerPartes[${i}].color=this.checked?(document.getElementById('bpc-${i}').value||'#A88671'):null;document.getElementById('bpc-${i}').style.visibility=this.checked?'visible':'hidden';_actualizarPreviewBannerTitulo()">
         <input type="color" id="bpc-${i}" value="${colorVal}"
@@ -5825,7 +5920,7 @@ function _buildBannerPartesRows() {
 function _renderBannerPartesUI() {
   const el = document.getElementById('banner-partes-editor');
   if (el) el.innerHTML = _buildBannerPartesRows() + (window._bannerPartes.length < 4
-    ? `<button type="button" class="btn btn-secondary" style="font-size:12px" onclick="window._bannerPartes.push({texto:'',color:null,italica:false});_renderBannerPartesUI()">+ Agregar parte</button>`
+    ? `<button type="button" class="btn btn-secondary" style="font-size:12px" onclick="window._bannerPartes.push({texto:'',color:null,italica:false,fuente:null,salto_linea_antes:false});_renderBannerPartesUI()">+ Agregar parte</button>`
     : '');
   _actualizarPreviewBannerTitulo();
 }
@@ -5834,18 +5929,29 @@ function _actualizarPreviewBannerTitulo() {
   const el = document.getElementById('banner-titulo-preview');
   if (!el) return;
   const partes = window._bannerPartes || [];
-  el.innerHTML = partes.map(p => {
+  el.innerHTML = partes.map((p, i) => {
     const safe = (p.texto||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const style = p.color ? ` style="color:${p.color}"` : '';
-    return p.italica ? `<em${style}>${safe}</em>` : `<span${style}>${safe}</span>`;
+    const styles = [];
+    if (p.color) styles.push('color:' + p.color);
+    if (p.fuente) { styles.push('font-family:"' + p.fuente + '",serif'); _cargarFuenteGF(p.fuente); }
+    const styleAttr = styles.length ? ` style="${styles.join(';')}"` : '';
+    const br = (p.salto_linea_antes && i > 0) ? '<br>' : '';
+    return br + (p.italica ? `<em${styleAttr}>${safe}</em>` : `<span${styleAttr}>${safe}</span>`);
   }).join('');
 }
 
 function renderTabBanner(cfg) {
-  // Inicializar partes del título
+  // Inicializar partes del título y fuentes custom
+  window._fuentesCustom = Array.isArray(cfg.fuentes_custom) ? [...cfg.fuentes_custom] : [];
   window._bannerPartes = (Array.isArray(cfg.banner_titulo_partes) && cfg.banner_titulo_partes.length)
-    ? cfg.banner_titulo_partes.map(p => ({ texto: p.texto||'', color: p.color||null, italica: !!p.italica }))
-    : [{ texto: cfg.banner_titulo || '', color: null, italica: false }];
+    ? cfg.banner_titulo_partes.map(p => ({
+        texto:             p.texto||'',
+        color:             p.color||null,
+        italica:           !!p.italica,
+        fuente:            p.fuente||null,
+        salto_linea_antes: !!p.salto_linea_antes,
+      }))
+    : [{ texto: cfg.banner_titulo || '', color: null, italica: false, fuente: null, salto_linea_antes: false }];
 
   const bannerPreview = cfg.banner_imagen_url
     ? `<div style="margin-bottom:8px;position:relative">
@@ -5857,10 +5963,14 @@ function renderTabBanner(cfg) {
          <span style="font-size:11px">Recomendado: 1400×800px · Máx 5MB</span>
        </div>`;
 
-  const initialPreview = window._bannerPartes.map(p => {
+  const initialPreview = window._bannerPartes.map((p, i) => {
     const safe = (p.texto||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const style = p.color ? ` style="color:${p.color}"` : '';
-    return p.italica ? `<em${style}>${safe}</em>` : `<span${style}>${safe}</span>`;
+    const styles = [];
+    if (p.color) styles.push('color:' + p.color);
+    if (p.fuente) { styles.push('font-family:"' + p.fuente + '",serif'); _cargarFuenteGF(p.fuente); }
+    const styleAttr = styles.length ? ` style="${styles.join(';')}"` : '';
+    const br = (p.salto_linea_antes && i > 0) ? '<br>' : '';
+    return br + (p.italica ? `<em${styleAttr}>${safe}</em>` : `<span${styleAttr}>${safe}</span>`);
   }).join('');
 
   return `
@@ -5876,7 +5986,7 @@ function renderTabBanner(cfg) {
     <div id="banner-partes-editor">
       ${_buildBannerPartesRows()}
       ${window._bannerPartes.length < 4
-        ? `<button type="button" class="btn btn-secondary" style="font-size:12px" onclick="window._bannerPartes.push({texto:'',color:null,italica:false});_renderBannerPartesUI()">+ Agregar parte</button>`
+        ? `<button type="button" class="btn btn-secondary" style="font-size:12px" onclick="window._bannerPartes.push({texto:'',color:null,italica:false,fuente:null,salto_linea_antes:false});_renderBannerPartesUI()">+ Agregar parte</button>`
         : ''}
     </div>
     <div style="margin-top:12px;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px">
@@ -6207,12 +6317,17 @@ async function guardarBanner() {
   const msgEl     = document.getElementById('cfg-banner-msg');
   if (msgEl) msgEl.textContent = 'Guardando...';
   try {
+    const partesGuardar = partes.map(p => ({
+      texto: p.texto, color: p.color, italica: p.italica,
+      fuente: p.fuente || null, salto_linea_antes: !!p.salto_linea_antes,
+    }));
     const body = {
       banner_titulo: titulo,
-      banner_titulo_partes: partes.length > 1 || partes[0]?.color || partes[0]?.italica ? partes : null,
+      banner_titulo_partes: partes.length > 1 || partes[0]?.color || partes[0]?.italica || partes[0]?.fuente ? partesGuardar : null,
       banner_subtitulo: subtitulo,
       banner_boton_texto: botonTxt, banner_boton_url: botonUrl,
       franja_activa: franjaAct, franja_texto: franjaTxt,
+      fuentes_custom: window._fuentesCustom || [],
     };
     if (_miTiendaConfig?.banner_imagen_url !== undefined) body.banner_imagen_url = _miTiendaConfig.banner_imagen_url;
     await api('PUT', '/api/tienda-config', body);
