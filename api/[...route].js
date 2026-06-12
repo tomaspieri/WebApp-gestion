@@ -3493,8 +3493,18 @@ async function handlePutMiTiendaConfig(req, res, user) {
   }
 
   updates.updated_at = new Date().toISOString();
-  const { error } = await adminSupabase
+  let { error } = await adminSupabase
     .from('tienda_config').update(updates).eq('user_id', user.userId);
+
+  // Si falla por columna inexistente, guardar sin las columnas opcionales no migradas aún
+  const COLS_OPCIONALES = ['banner_titulo_partes', 'fuentes_custom'];
+  if (error && error.message && COLS_OPCIONALES.some(c => error.message.includes(c))) {
+    const { banner_titulo_partes: _d1, fuentes_custom: _d2, ...updatesFallback } = updates;
+    const retry = await adminSupabase
+      .from('tienda_config').update(updatesFallback).eq('user_id', user.userId);
+    error = retry.error;
+  }
+
   if (error) return json(res, 500, { error: 'Error al guardar: ' + error.message });
   return json(res, 200, { ok: true });
 }
