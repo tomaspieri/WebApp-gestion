@@ -1303,6 +1303,9 @@ async function doLogin(e) {
     hideAuthOverlay();
     renderSidebar();
     renderUserBadge();
+    initTheme();
+    showStoreBanner();
+    checkAnuncioActivo();
     await loadAll();
     iniciarNotificaciones();
     if (_currentUser.rol === 'admin') showPage('admin-dashboard');
