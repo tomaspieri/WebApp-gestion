@@ -1306,10 +1306,14 @@ async function doLogin(e) {
     initTheme();
     showStoreBanner();
     checkAnuncioActivo();
-    await loadAll();
+    if (_currentUser.rol === 'admin') {
+      showPage('admin-dashboard');
+    } else {
+      showPage('dashboard');
+      await loadAll();
+      showPage('dashboard');
+    }
     iniciarNotificaciones();
-    if (_currentUser.rol === 'admin') showPage('admin-dashboard');
-    else showPage('dashboard');
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
@@ -1513,6 +1517,7 @@ function renderSidebar() {
   svgs.promo    = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   svgs.analytics= '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>';
 
+  const conTienda = tipoCuenta === 'gestion_tienda';
   let html = '';
   if (isAdmin) {
     html = `
@@ -1526,7 +1531,6 @@ function renderSidebar() {
       ${navItem('admin-config','config','Configuración')}
     `;
   } else {
-    const conTienda = tipoCuenta === 'gestion_tienda';
     html = `
       <div class="nav-section-label">PRINCIPAL</div>
       ${navItem('dashboard','dashboard','Dashboard')}
@@ -1598,7 +1602,8 @@ function _cerrarBannerAnuncio(id) {
   banner.classList.add('closing');
   setTimeout(() => {
     banner.remove();
-    localStorage.setItem(`enorden-anuncio-${id}`, 'cerrado');
+    const uid = _currentUser?.id || 'anon';
+    localStorage.setItem(`enorden-anuncio-${id}-${uid}`, 'cerrado');
     document.documentElement.style.setProperty('--banner-h', '0px');
   }, 200);
 }
@@ -1609,7 +1614,8 @@ async function checkAnuncioActivo() {
     if (!resp.ok) return;
     const data = await resp.json();
     if (!data?.id) return;
-    const key = `enorden-anuncio-${data.id}`;
+    const uid = _currentUser?.id || 'anon';
+    const key = `enorden-anuncio-${data.id}-${uid}`;
     if (localStorage.getItem(key)) return;
     const bgMap = { info: 'var(--accent)', novedad: 'var(--success)', mantenimiento: 'var(--warning)' };
     const icono = data.tipo === 'mantenimiento' ? '⚠' : data.tipo === 'novedad' ? '✦' : 'ℹ';
@@ -5784,7 +5790,10 @@ function renderCmsTab() {
 function renderTabApariencia(cfg) {
   const logoPreview = cfg.logo_url
     ? `<div style="margin-bottom:8px"><img src="${cfg.logo_url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"></div>
-       <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('logo-upload').click()">Cambiar logo</button>`
+       <div style="display:flex;gap:8px;flex-wrap:wrap">
+         <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('logo-upload').click()">Cambiar logo</button>
+         <button type="button" class="btn btn-secondary" style="font-size:12px;color:var(--danger,#e74c3c)" onclick="eliminarLogo()">Eliminar logo</button>
+       </div>`
     : `<div onclick="document.getElementById('logo-upload').click()" style="width:100%;min-height:80px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);font-size:13px">Subir logo (JPG/PNG/WebP, máx 2MB)</div>`;
   return `
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
@@ -6311,7 +6320,10 @@ async function subirImagenConfig(input, tipo) {
     if (tipo === 'logo') {
       _miTiendaConfig = { ..._miTiendaConfig, logo_url: url };
       if (previewEl) previewEl.innerHTML = `<div style="margin-bottom:8px"><img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"></div>
-        <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('logo-upload').click()">Cambiar logo</button>`;
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('logo-upload').click()">Cambiar logo</button>
+          <button type="button" class="btn btn-secondary" style="font-size:12px;color:var(--danger,#e74c3c)" onclick="eliminarLogo()">Eliminar logo</button>
+        </div>`;
     } else {
       _miTiendaConfig = { ..._miTiendaConfig, banner_imagen_url: url };
       if (previewEl) previewEl.innerHTML = `<div style="margin-bottom:8px;position:relative">
@@ -6342,6 +6354,29 @@ async function guardarApariencia() {
     _miTiendaConfig = { ..._miTiendaConfig, ...body };
     if (msgEl) { msgEl.style.color='var(--success,#27ae60)'; msgEl.textContent = 'Guardado'; setTimeout(()=>{ if(msgEl) msgEl.textContent=''; },2500); }
   } catch(e) { if(msgEl) { msgEl.style.color='var(--danger,#e74c3c)'; msgEl.textContent = 'Error al guardar'; } }
+}
+
+async function eliminarLogo() {
+  if (!confirm('Eliminar el logo de la tienda?')) return;
+  const previewEl = document.getElementById('logo-preview');
+  const prev = _miTiendaConfig?.logo_url;
+  if (previewEl) previewEl.innerHTML = `<div style="color:var(--text-3);font-size:12px">Eliminando...</div>`;
+  try {
+    await api('PUT', '/api/tienda-config', { logo_url: null });
+    _miTiendaConfig = { ..._miTiendaConfig, logo_url: null };
+    if (previewEl) previewEl.innerHTML = `<div onclick="document.getElementById('logo-upload').click()" style="width:100%;min-height:80px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);font-size:13px">Subir logo (JPG/PNG/WebP, máx 2MB)</div>`;
+    showToast('Logo eliminado');
+  } catch(e) {
+    _miTiendaConfig = { ..._miTiendaConfig, logo_url: prev };
+    if (previewEl) previewEl.innerHTML = prev
+      ? `<div style="margin-bottom:8px"><img src="${prev}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"></div>
+         <div style="display:flex;gap:8px;flex-wrap:wrap">
+           <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('logo-upload').click()">Cambiar logo</button>
+           <button type="button" class="btn btn-secondary" style="font-size:12px;color:var(--danger,#e74c3c)" onclick="eliminarLogo()">Eliminar logo</button>
+         </div>`
+      : `<div onclick="document.getElementById('logo-upload').click()" style="width:100%;min-height:80px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);font-size:13px">Subir logo (JPG/PNG/WebP, máx 2MB)</div>`;
+    showToast('Error al eliminar logo', 'error');
+  }
 }
 
 async function guardarBanner() {
@@ -6893,11 +6928,17 @@ async function submitEditarCliente(e, id) {
   if (_currentUser?.rol === 'admin') {
     showPage('admin-dashboard');
   } else {
-    await loadAll();
-    // Manejar retorno del callback de MercadoPago
+    // Mostrar dashboard inmediatamente (con spinner) mientras cargan los datos
     const _urlParams = new URLSearchParams(window.location.search);
     const _mpStatus  = _urlParams.get('mp');
     const _mpError   = _urlParams.get('mp_error');
+    if (_mpStatus === 'conectado' || _mpError) {
+      showPage('config');
+    } else {
+      showPage('dashboard');
+    }
+    await loadAll();
+    // Re-renderizar con datos reales
     if (_mpStatus === 'conectado' || _mpError) {
       history.replaceState({}, '', '/');
       if (_mpStatus === 'conectado') {
