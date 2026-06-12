@@ -1200,7 +1200,6 @@ function setRefreshToken(t, persist) {
 function clearRefreshToken()      { localStorage.removeItem('gestion_refresh_token'); sessionStorage.removeItem('gestion_refresh_token'); }
 
 async function tryRefreshToken() {
-  console.log('[AUTH] tryRefreshToken() — refreshToken existe:', !!getRefreshToken());
   const rt = getRefreshToken();
   if (!rt) return false;
   // Preservar el mismo storage que eligió el usuario al hacer login
@@ -1211,13 +1210,12 @@ async function tryRefreshToken() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: rt })
     });
-    console.log('[AUTH] /api/auth/refresh status:', res.status);
-    if (!res.ok) { console.log('[AUTH] Refresh falló'); return false; }
+    if (!res.ok) return false;
     const data = await res.json();
     setToken(data.token, persist ? undefined : false);
     if (data.refreshToken) setRefreshToken(data.refreshToken, persist ? undefined : false);
     return true;
-  } catch(e) { console.log('[AUTH] Refresh error:', e?.message); return false; }
+  } catch { return false; }
 }
 
 let _tokenRefreshTimer = null;
@@ -1298,13 +1296,8 @@ async function doLogin(e) {
     if (!r.ok) throw new Error(data.error || 'Error al ingresar');
     const recordarEl = document.getElementById('login-recordarme');
     const recordar = recordarEl ? recordarEl.checked : true;
-    console.log('[AUTH] Checkbox recordarme:', recordar);
     setToken(data.token, recordar);
     if (data.refreshToken) setRefreshToken(data.refreshToken, recordar);
-    console.log('[AUTH] Token guardado — recordar:', recordar);
-    console.log('[AUTH] Token ahora en localStorage:', !!localStorage.getItem('gestion_token'));
-    console.log('[AUTH] Token ahora en sessionStorage:', !!sessionStorage.getItem('gestion_token'));
-    console.log('[AUTH] RefreshToken ahora en localStorage:', !!localStorage.getItem('gestion_refresh_token'));
     setupTokenRefresh();
     _currentUser = data.user;
     hideAuthOverlay();
@@ -1333,8 +1326,6 @@ function confirmarLogout() {
 }
 
 function _performLogout(expired) {
-  console.log('[AUTH] _performLogout() llamado — expired:', expired);
-  console.trace();
   _sessionExpired = expired;
   clearToken();
   clearRefreshToken();
@@ -1671,50 +1662,49 @@ async function _fetchConRetry(url, opts, intentos = 3) {
 }
 
 async function initAuth() {
-  console.log('[AUTH] initAuth() corriendo');
-  console.log('[AUTH] token en localStorage:', !!localStorage.getItem('gestion_token'));
-  console.log('[AUTH] token en sessionStorage:', !!sessionStorage.getItem('gestion_token'));
-  console.log('[AUTH] refreshToken en localStorage:', !!localStorage.getItem('gestion_refresh_token'));
-  console.log('[AUTH] refreshToken en sessionStorage:', !!sessionStorage.getItem('gestion_refresh_token'));
   let token = getToken();
   if (!token) {
-    console.warn('[AUTH] Sin token, intentando refresh...');
     const refreshed = await tryRefreshToken();
     if (!refreshed) { showAuthOverlay(false); return false; }
     token = getToken();
   }
+
+  // ── FASE 1: Validar token contra el servidor ──────────────────────────────
+  // Solo aquí se pueden borrar tokens (si el servidor confirma que son inválidos).
+  let me;
   try {
-    console.log('[AUTH] Token encontrado en', localStorage.getItem('gestion_token') ? 'localStorage' : 'sessionStorage');
-    console.log('[AUTH] Llamando /api/auth/me con token:', token ? token.slice(0,20)+'...' : 'NULL');
-    let me = await _fetchConRetry('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
-    console.log('[AUTH] /api/auth/me status:', me.status);
-    if (!me.ok) {
-      console.log('[AUTH] /api/auth/me falló, intentando refresh...');
-      const refreshed = await tryRefreshToken();
-      if (!refreshed) { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
-      me = await _fetchConRetry('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + getToken() } });
-      console.log('[AUTH] /api/auth/me (tras refresh) status:', me.status);
-      if (!me.ok) { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
-    }
-    console.log('[AUTH] /api/auth/me OK → usuario restaurado');
-    _currentUser = (await me.json()).user;
-    setupTokenRefresh();
-    renderSidebar();
-    renderUserBadge();
-    showStoreBanner();
-    checkAnuncioActivo();
-    return true;
+    me = await _fetchConRetry('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
   } catch(e) {
-    const esErrorDeRed = e instanceof TypeError || e.name === 'TypeError';
-    console.log('[AUTH] catch en initAuth — error:', e?.message, '— tipo:', e?.name);
-    console.log('[AUTH] ¿Borrando tokens?', !esErrorDeRed);
-    if (!esErrorDeRed) {
-      clearToken(); clearRefreshToken();
-    }
-    console.warn('[AUTH] Error:', e.message, esErrorDeRed ? '(error de red — tokens conservados)' : '(error de auth — tokens borrados)');
+    // Error de red (cold start Vercel, offline) — preservar tokens para el próximo intento
     showAuthOverlay(false);
     return false;
   }
+
+  if (!me.ok) {
+    const refreshed = await tryRefreshToken();
+    if (!refreshed) { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
+    try {
+      me = await _fetchConRetry('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+    } catch(e) { showAuthOverlay(false); return false; }
+    if (!me.ok) { clearToken(); clearRefreshToken(); showAuthOverlay(false); return false; }
+  }
+
+  // ── FASE 2: Restaurar sesión ──────────────────────────────────────────────
+  // Token confirmado válido por el servidor. NUNCA borrar tokens aquí.
+  try {
+    _currentUser = (await me.json()).user;
+  } catch(e) {
+    console.error('[initAuth] Error parseando /api/auth/me:', e.message);
+    showAuthOverlay(false);
+    return false;
+  }
+
+  setupTokenRefresh();
+  try { renderSidebar(); } catch(e) { console.error('[initAuth] renderSidebar:', e.message); }
+  try { renderUserBadge(); } catch(e) { console.error('[initAuth] renderUserBadge:', e.message); }
+  showStoreBanner();
+  checkAnuncioActivo();
+  return true;
 }
 
 // ─── IMPERSONACIÓN ────────────────────────────────────────────────────────────
